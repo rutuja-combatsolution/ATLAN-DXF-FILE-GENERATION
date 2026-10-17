@@ -1,0 +1,390 @@
+{
+    "geometry": {
+        "breadth_mm": 3490.0,
+        "cover_depth": 1440.0,
+        "finished_surface_level": 3000.0,
+        "height_mm": 3000.0,
+        "length_mm": 14990.0,
+        "minimum_cover_depth": 100.0,
+        "outlet_invert_level": 3000.0,
+        "stack_length": 1560.0,
+        "stack_number": "Double"
+    },
+    "input": {
+        "available_depth_to_invert": 3.0,
+        "base_of_tank_level": 97.0,
+        "constraining_dimension": 15.0,
+        "constraining_factor": "length",
+        "fsl_user_input": 100.0,
+        "include_liner": null,
+        "layers_in_system": 2.0,
+        "max_layers_possible": 3.0,
+        "maximum_groundwater_level_m_ahd": 0.0,
+        "number_of_inlets": 9,
+        "number_of_manholes": 11,
+        "number_of_outlets": 12,
+        "project_created": true,
+        "target_storage_volume": 80.626,
+        "volumn_provided": 78.0
+    },
+    "material": {
+        "cubes_long": 13,
+        "cubes_wide": 3,
+        "excavation_volume": 215.39,
+        "final_backfill_required": 124.99,
+        "initial_backfill_required": 73.23,
+        "inlet": [
+            {
+                "diameter": 600.0,
+                "horizontal_offset": 0.0,
+                "id": "ae96fdc5-c9d1-4064-bf1b-5f5ccf782a08",
+                "invert_level": 97.0,
+                "invert_level_touched": false,
+                "side": "front",
+                "top_depth_offset": 0.0,
+                "vertical_offset": 0.0
+            },
+            {
+                "diameter": 750.0,
+                "horizontal_offset": 2.306153846153846,
+                "id": "02acd717-241c-411a-84c9-fdf030570648",
+                "invert_level": 97.0,
+                "invert_level_touched": false,
+                "side": "front",
+                "top_depth_offset": 0.0,
+                "vertical_offset": 0.0
+            },
+            {
+                "diameter": 150.0,
+                "horizontal_offset": 2.306153846153846,
+                "id": "0023a29e-8022-43cc-908d-f2e0b76b5dbc",
+                "invert_level": 98.0,
+                "invert_level_touched": true,
+                "side": "front",
+                "top_depth_offset": 0.0,
+                "vertical_offset": 0.9873076923076969
+            },
+            {
+                "diameter": 150.0,
+                "horizontal_offset": 5.765384615384615,
+                "id": "3c38665b-3ef3-4c06-bf79-ac6af59e9e4f",
+                "invert_level": 98.0,
+                "invert_level_touched": true,
+                "side": "front",
+                "top_depth_offset": 0.0,
+                "vertical_offset": 0.9873076923076969
+            },
+            {
+                "diameter": 150.0,
+                "horizontal_offset": 0.0,
+                "id": "0f86015c-99e3-4047-aa5c-23888d8fb5d2",
+                "invert_level": 97.0,
+                "invert_level_touched": false,
+                "side": "left",
+                "top_depth_offset": 0.0,
+                "vertical_offset": 0.0
+            },
+            {
+                "diameter": 150.0,
+                "horizontal_offset": -1.1633333333333333,
+                "id": "b73c8812-cb4c-4ddf-b657-8d103f9b6c6c",
+                "invert_level": 97.0,
+                "invert_level_touched": false,
+                "side": "left",
+                "top_depth_offset": 0.0,
+                "vertical_offset": 0.0
+            },
+            {
+                "diameter": 150.0,
+                "horizontal_offset": 1.1633333333333333,
+                "id": "ba7a026c-e04a-4eac-8440-6f5e59dbadd5",
+                "invert_level": 97.0,
+                "invert_level_touched": false,
+                "side": "left",
+                "top_depth_offset": 0.0,
+                "vertical_offset": 0.0
+            },
+            {
+                "diameter": 150.0,
+                "horizontal_offset": -1.1633333333333333,
+                "id": "70ae06be-a11e-42ff-98da-b8d58f51f4d8",
+                "invert_level": 98.0,
+                "invert_level_touched": true,
+                "side": "left",
+                "top_depth_offset": 0.0,
+                "vertical_offset": 0.9873076923076969
+            },
+            {
+                "diameter": 150.0,
+                "horizontal_offset": -1.1633333333333333,
+                "id": "8a3e7c8c-ad66-4ed3-a4d3-e93bae10cd65",
+                "invert_level": 97.0,
+                "invert_level_touched": false,
+                "side": "left",
+                "top_depth_offset": 0.0,
+                "vertical_offset": 0.0
+            }
+        ],
+        "liner_required": 0.0,
+        "manhole": [
+            {
+                "diameter": null,
+                "horizontal_offset": -5.765384615384615,
+                "id": "2e522851-7d94-447c-b275-eb006c3a9108",
+                "invert_level": 97.0,
+                "invert_level_touched": false,
+                "manhole_type": "circular_300",
+                "side": "top",
+                "top_depth_offset": -1.1633333333333333,
+                "vertical_offset": 0.0
+            },
+            {
+                "diameter": null,
+                "horizontal_offset": -6.918461538461539,
+                "id": "37a8e5bd-6786-473f-a1d2-05bc406e9fb5",
+                "invert_level": 97.0,
+                "invert_level_touched": false,
+                "manhole_type": "circular_600",
+                "side": "top",
+                "top_depth_offset": -1.1633333333333333,
+                "vertical_offset": 0.0
+            },
+            {
+                "diameter": null,
+                "horizontal_offset": 5.765384615384615,
+                "id": "b7b29387-1250-4858-b79f-705b2e8a630d",
+                "invert_level": 97.0,
+                "invert_level_touched": false,
+                "manhole_type": "square_600x600",
+                "side": "top",
+                "top_depth_offset": -1.1633333333333333,
+                "vertical_offset": 0.0
+            },
+            {
+                "diameter": null,
+                "horizontal_offset": 6.918461538461539,
+                "id": "fb2c9835-ae64-4194-8e44-b679ef0b13cb",
+                "invert_level": 97.0,
+                "invert_level_touched": false,
+                "manhole_type": "square_600x600",
+                "side": "top",
+                "top_depth_offset": -1.1633333333333333,
+                "vertical_offset": 0.0
+            },
+            {
+                "diameter": null,
+                "horizontal_offset": 4.612307692307692,
+                "id": "c457f694-ceb6-4f2c-9b9b-7b1b0c16c476",
+                "invert_level": 97.0,
+                "invert_level_touched": false,
+                "manhole_type": "square_600x600",
+                "side": "top",
+                "top_depth_offset": -1.1633333333333333,
+                "vertical_offset": 0.0
+            },
+            {
+                "diameter": null,
+                "horizontal_offset": 1.153076923076923,
+                "id": "caf99aa3-d5f5-4691-8025-49eff08b7479",
+                "invert_level": 97.0,
+                "invert_level_touched": false,
+                "manhole_type": "circular_600",
+                "side": "top",
+                "top_depth_offset": 0.0,
+                "vertical_offset": 0.0
+            },
+            {
+                "diameter": null,
+                "horizontal_offset": 0.0,
+                "id": "6dbd5189-db48-4cdd-94d1-5959222341dc",
+                "invert_level": 97.0,
+                "invert_level_touched": false,
+                "manhole_type": "circular_300",
+                "side": "top",
+                "top_depth_offset": -1.1633333333333333,
+                "vertical_offset": 0.0
+            },
+            {
+                "diameter": null,
+                "horizontal_offset": -1.153076923076923,
+                "id": "074737de-1d08-4279-a76f-14f4a88fc435",
+                "invert_level": 97.0,
+                "invert_level_touched": false,
+                "manhole_type": "square_600x600",
+                "side": "top",
+                "top_depth_offset": 0.0,
+                "vertical_offset": 0.0
+            },
+            {
+                "diameter": null,
+                "horizontal_offset": -5.765384615384615,
+                "id": "8c2f3ede-4534-4b67-86af-08ca434b59a5",
+                "invert_level": 97.0,
+                "invert_level_touched": false,
+                "manhole_type": "square_600x600",
+                "side": "top",
+                "top_depth_offset": 1.1633333333333333,
+                "vertical_offset": 0.0
+            },
+            {
+                "diameter": null,
+                "horizontal_offset": 2.306153846153846,
+                "id": "cdff642c-8493-4afb-ad8a-f1fc6bf4126e",
+                "invert_level": 97.0,
+                "invert_level_touched": false,
+                "manhole_type": "square_600x600",
+                "side": "top",
+                "top_depth_offset": 1.1633333333333333,
+                "vertical_offset": 0.0
+            },
+            {
+                "diameter": null,
+                "horizontal_offset": -3.4592307692307696,
+                "id": "e1f59fa6-b6c2-4bd1-ba47-14b4bfdcc6f1",
+                "invert_level": 97.0,
+                "invert_level_touched": false,
+                "manhole_type": "circular_600",
+                "side": "top",
+                "top_depth_offset": 1.1633333333333333,
+                "vertical_offset": 0.0
+            }
+        ],
+        "metres_long": 14.99,
+        "metres_wide": 3.49,
+        "no_double_clips": 62,
+        "no_full_cubes": 78,
+        "no_full_side_plates": 64,
+        "no_half_cubes": 156,
+        "no_half_side_plates": 0,
+        "no_non_woven_geotextile": 202.86,
+        "no_side_plates": 64,
+        "no_single_clips": 124,
+        "number_of_inlets": 9,
+        "number_of_manholes": 11,
+        "number_of_outlets": 12,
+        "outlet": [
+            {
+                "diameter": 150.0,
+                "horizontal_offset": 5.765384615384615,
+                "id": "71037b39-0ba6-4d75-b59e-ff93d9a6fece",
+                "invert_level": 97.0,
+                "invert_level_touched": false,
+                "side": "front",
+                "top_depth_offset": 0.0,
+                "vertical_offset": 0.0
+            },
+            {
+                "diameter": 150.0,
+                "horizontal_offset": 5.765384615384615,
+                "id": "66a64e14-9407-45ad-b3fb-6de519959fe7",
+                "invert_level": 97.0,
+                "invert_level_touched": true,
+                "side": "back",
+                "top_depth_offset": 0.0,
+                "vertical_offset": 0.0
+            },
+            {
+                "diameter": 150.0,
+                "horizontal_offset": -6.918461538461539,
+                "id": "cee16eab-e579-4fce-bf2e-2411c602564c",
+                "invert_level": 97.0,
+                "invert_level_touched": false,
+                "side": "back",
+                "top_depth_offset": 0.0,
+                "vertical_offset": 0.0
+            },
+            {
+                "diameter": 150.0,
+                "horizontal_offset": -5.765384615384615,
+                "id": "80e69b96-5289-4e12-b0f4-b7d26ed67538",
+                "invert_level": 97.0,
+                "invert_level_touched": false,
+                "side": "back",
+                "top_depth_offset": 0.0,
+                "vertical_offset": 0.0
+            },
+            {
+                "diameter": 375.0,
+                "horizontal_offset": -4.612307692307692,
+                "id": "aad6ceff-114a-43e3-be31-5e4b20ea035e",
+                "invert_level": 97.0,
+                "invert_level_touched": false,
+                "side": "back",
+                "top_depth_offset": 0.0,
+                "vertical_offset": 0.0
+            },
+            {
+                "diameter": 150.0,
+                "horizontal_offset": 1.153076923076923,
+                "id": "e805d220-4ec5-442d-8c88-9538a4a41247",
+                "invert_level": 97.0,
+                "invert_level_touched": false,
+                "side": "back",
+                "top_depth_offset": 0.0,
+                "vertical_offset": 0.0
+            },
+            {
+                "diameter": 225.0,
+                "horizontal_offset": 2.306153846153846,
+                "id": "9e795762-79a3-4d03-a546-b46f42565b49",
+                "invert_level": 97.0,
+                "invert_level_touched": false,
+                "side": "back",
+                "top_depth_offset": 0.0,
+                "vertical_offset": 0.0
+            },
+            {
+                "diameter": 225.0,
+                "horizontal_offset": -1.153076923076923,
+                "id": "b156249b-3632-42c6-875f-5f765a89fa98",
+                "invert_level": 98.0,
+                "invert_level_touched": true,
+                "side": "back",
+                "top_depth_offset": 0.0,
+                "vertical_offset": 0.0
+            },
+            {
+                "diameter": 150.0,
+                "horizontal_offset": 0.0,
+                "id": "6d17acb9-b67b-40c2-9635-42fa44194760",
+                "invert_level": 97.0,
+                "invert_level_touched": false,
+                "side": "right",
+                "top_depth_offset": 0.0,
+                "vertical_offset": 0.0
+            },
+            {
+                "diameter": 150.0,
+                "horizontal_offset": 1.1633333333333333,
+                "id": "d168c1ee-023f-4d61-8934-794bc842781d",
+                "invert_level": 97.0,
+                "invert_level_touched": false,
+                "side": "right",
+                "top_depth_offset": 0.0,
+                "vertical_offset": 0.0
+            },
+            {
+                "diameter": 150.0,
+                "horizontal_offset": -1.1633333333333333,
+                "id": "d26e295f-bb76-4f85-8f41-45ce9940cd05",
+                "invert_level": 97.0,
+                "invert_level_touched": false,
+                "side": "right",
+                "top_depth_offset": 0.0,
+                "vertical_offset": 0.0
+            },
+            {
+                "diameter": 150.0,
+                "horizontal_offset": -1.1633333333333333,
+                "id": "935dd3e7-13e0-4542-a277-82796501e2fb",
+                "invert_level": 98.0,
+                "invert_level_touched": true,
+                "side": "right",
+                "top_depth_offset": 0.0,
+                "vertical_offset": 0.9873076923076969
+            }
+        ],
+        "system_footprint": 52.32,
+        "tank_storage": 78.0
+    }
+}

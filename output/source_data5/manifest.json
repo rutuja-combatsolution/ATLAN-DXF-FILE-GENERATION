@@ -1,0 +1,181 @@
+{
+  "generated": "2026-10-17T15:00:54",
+  "project": [],
+  "title": [
+    "ATLAN CUBE",
+    "ATLAN CUBE 1000L MODULE (SINGLE STACK)",
+    "8-CUBES WIDE x 1-CUBES LONG - 8m3",
+    "GENERAL ARRANGEMENT"
+  ],
+  "model_mm": {
+    "length": 1150,
+    "width": 9200,
+    "stack_height": 780.0,
+    "cubes_long": 1,
+    "cubes_wide": 8,
+    "rows_mm": [
+      780
+    ]
+  },
+  "levels": {
+    "fsl": 100.0,
+    "top_of_storage": 98.0,
+    "base": 97.22
+  },
+  "views": [
+    {
+      "file": "plan_view.dxf",
+      "view": "PLAN VIEW",
+      "plot_scale": "1:100",
+      "sheet": "A3",
+      "paper_mm": [
+        115,
+        136
+      ],
+      "mm_per_pt": 35.278
+    },
+    {
+      "file": "front_elevation.dxf",
+      "view": "FRONT ELEVATION",
+      "plot_scale": "1:20",
+      "sheet": "A3",
+      "paper_mm": [
+        148,
+        167
+      ],
+      "mm_per_pt": 7.056
+    },
+    {
+      "file": "back_elevation.dxf",
+      "view": "BACK ELEVATION",
+      "plot_scale": "1:20",
+      "sheet": "A3",
+      "paper_mm": [
+        148,
+        167
+      ],
+      "mm_per_pt": 7.056
+    },
+    {
+      "file": "left_elevation.dxf",
+      "view": "LEFT ELEVATION",
+      "plot_scale": "1:50",
+      "sheet": "A3",
+      "paper_mm": [
+        229,
+        95
+      ],
+      "mm_per_pt": 17.639
+    },
+    {
+      "file": "right_elevation.dxf",
+      "view": "RIGHT ELEVATION",
+      "plot_scale": "1:50",
+      "sheet": "A3",
+      "paper_mm": [
+        229,
+        95
+      ],
+      "mm_per_pt": 17.639
+    }
+  ],
+  "components": [
+    {
+      "file": "half_cube_module.dxf",
+      "component": "1000L MODULE - HALF CUBE",
+      "quantity": 16,
+      "unit": "Each",
+      "geometry": "supplier drawing",
+      "source": "20250617_510.0023-06_dwg.pdf",
+      "status": "ok"
+    },
+    {
+      "file": "side_plate_full_height.dxf",
+      "component": "1000L MODULE - SIDE PANEL FULL HEIGHT",
+      "quantity": 18,
+      "unit": "Each",
+      "geometry": "supplier drawing",
+      "source": "20250617_510.0024-03_dwg.pdf",
+      "status": "ok"
+    },
+    {
+      "file": "single_connector.dxf",
+      "component": "SINGLE CONNECTOR",
+      "quantity": 14,
+      "unit": "Each",
+      "geometry": "none (placeholder sheet)",
+      "source": "",
+      "status": "ok"
+    },
+    {
+      "file": "manhole_1_square_600x600.dxf",
+      "component": "MANHOLE 1 - SQUARE_600X600",
+      "quantity": 1,
+      "unit": "Each",
+      "geometry": "payload (parametric)",
+      "source": "payload",
+      "id": "43a3d5be-ddd2-491d-a71c-8737273bbf13",
+      "status": "ok"
+    },
+    {
+      "file": "manhole_2_square_600x600.dxf",
+      "component": "MANHOLE 2 - SQUARE_600X600",
+      "quantity": 1,
+      "unit": "Each",
+      "geometry": "payload (parametric)",
+      "source": "payload",
+      "id": "1e21649a-04da-405c-abf2-74cab3cb9efd",
+      "status": "ok"
+    },
+    {
+      "file": "inlet_1_dn150.dxf",
+      "component": "INLET-1 - Ø150 PIPE",
+      "quantity": 1,
+      "unit": "Each",
+      "geometry": "payload (parametric)",
+      "source": "payload",
+      "id": "52eef333-1bb0-4cf6-ae0c-3c47e44f2fae",
+      "status": "ok"
+    },
+    {
+      "file": "inlet_2_dn150.dxf",
+      "component": "INLET-2 - Ø150 PIPE",
+      "quantity": 1,
+      "unit": "Each",
+      "geometry": "payload (parametric)",
+      "source": "payload",
+      "id": "4a747676-f9f2-436f-9b8e-d6ed5771c70c",
+      "status": "ok"
+    },
+    {
+      "file": "outlet_1_dn150.dxf",
+      "component": "OUTLET-1 - Ø150 PIPE",
+      "quantity": 1,
+      "unit": "Each",
+      "geometry": "payload (parametric)",
+      "source": "payload",
+      "id": "6ef1ac58-b044-41ca-bbde-ba08a91e7988",
+      "status": "ok"
+    },
+    {
+      "file": "outlet_2_dn150.dxf",
+      "component": "OUTLET-2 - Ø150 PIPE",
+      "quantity": 1,
+      "unit": "Each",
+      "geometry": "payload (parametric)",
+      "source": "payload",
+      "id": "6c6928b3-158b-43ce-8e3e-0173ec3f0514",
+      "status": "ok"
+    },
+    {
+      "file": "outlet_3_dn150.dxf",
+      "component": "OUTLET-3 - Ø150 PIPE",
+      "quantity": 1,
+      "unit": "Each",
+      "geometry": "payload (parametric)",
+      "source": "payload",
+      "id": "c8dd16e8-697c-47de-a589-fc205c036c03",
+      "status": "ok"
+    }
+  ]
+}

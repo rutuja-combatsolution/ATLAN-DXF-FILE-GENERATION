@@ -1,0 +1,131 @@
+{
+  "geometry": {
+    "breadth_mm": 14990.0,
+    "cover_depth": 1440.0,
+    "finished_surface_level": 3000.0,
+    "height_mm": 3000.0,
+    "length_mm": 32240.0,
+    "minimum_cover_depth": 100.0,
+    "outlet_invert_level": 3000.0,
+    "stack_length": 1560.0,
+    "stack_number": "Double"
+  },
+  "input": {
+    "available_depth_to_invert": 3.0,
+    "base_of_tank_level": 97.0,
+    "constraining_dimension": 15.0,
+    "constraining_factor": "width",
+    "fsl_user_input": 100.0,
+    "include_liner": null,
+    "layers_in_system": 2.0,
+    "max_layers_possible": 3.0,
+    "maximum_groundwater_level_m_ahd": 0.0,
+    "number_of_inlets": 2,
+    "number_of_manholes": 2,
+    "number_of_outlets": 3,
+    "project_created": true,
+    "target_storage_volume": 1425.236,
+    "volumn_provided": 728.0
+  },
+  "material": {
+    "cubes_long": 28,
+    "cubes_wide": 13,
+    "excavation_volume": 1594.52,
+    "final_backfill_required": 779.53,
+    "initial_backfill_required": 211.77,
+    "inlet": [
+      {
+        "diameter": 150.0,
+        "horizontal_offset": 0.5775,
+        "id": "515f3d35-9b7a-4e2b-aa9d-efed630a5b0e",
+        "invert_level": 97.0,
+        "invert_level_touched": false,
+        "side": "left",
+        "top_depth_offset": 0.0,
+        "vertical_offset": 0.0
+      },
+      {
+        "diameter": 150.0,
+        "horizontal_offset": 4.0425,
+        "id": "2cb74412-d921-47e2-a855-efb193d8035e",
+        "invert_level": 97.0,
+        "invert_level_touched": false,
+        "side": "left",
+        "top_depth_offset": 0.0,
+        "vertical_offset": 0.0
+      }
+    ],
+    "liner_required": 0.0,
+    "manhole": [
+      {
+        "diameter": null,
+        "horizontal_offset": 0.0,
+        "id": "00b6cea4-5875-495a-a53c-5a43a74f3a43",
+        "invert_level": 97.0,
+        "invert_level_touched": false,
+        "manhole_type": "square_600x600",
+        "side": "top",
+        "top_depth_offset": 0.5775,
+        "vertical_offset": 0.0
+      },
+      {
+        "diameter": null,
+        "horizontal_offset": 0.0,
+        "id": "3ad45af1-6df5-429e-83f2-70310ab0e307",
+        "invert_level": 97.0,
+        "invert_level_touched": false,
+        "manhole_type": "square_600x600",
+        "side": "top",
+        "top_depth_offset": 0.5775,
+        "vertical_offset": 0.0
+      }
+    ],
+    "metres_long": 32.24,
+    "metres_wide": 14.99,
+    "no_double_clips": 687,
+    "no_full_cubes": 728,
+    "no_full_side_plates": 164,
+    "no_half_cubes": 1456,
+    "no_half_side_plates": 0,
+    "no_non_woven_geotextile": 1392.39,
+    "no_side_plates": 164,
+    "no_single_clips": 1374,
+    "number_of_inlets": 2,
+    "number_of_manholes": 2,
+    "number_of_outlets": 3,
+    "outlet": [
+      {
+        "diameter": 150.0,
+        "horizontal_offset": 0.5775,
+        "id": "288ae9aa-53ea-44b9-ad6e-d6060d32f6d9",
+        "invert_level": 97.0,
+        "invert_level_touched": false,
+        "side": "right",
+        "top_depth_offset": 0.0,
+        "vertical_offset": 0.0
+      },
+      {
+        "diameter": 150.0,
+        "horizontal_offset": 4.0425,
+        "id": "6c26f0c3-1d7f-407f-bf95-d3a3457df187",
+        "invert_level": 97.0,
+        "invert_level_touched": false,
+        "side": "right",
+        "top_depth_offset": 0.0,
+        "vertical_offset": 0.0
+      },
+      {
+        "diameter": 150.0,
+        "horizontal_offset": -4.0425,
+        "id": "10bca11b-2ff7-4259-9826-e3c5cee03678",
+        "invert_level": 97.0,
+        "invert_level_touched": false,
+        "side": "right",
+        "top_depth_offset": 0.0,
+        "vertical_offset": 0.0
+      }
+    ],
+    "system_footprint": 483.28,
+    "tank_storage": 728.0
+  }
+}

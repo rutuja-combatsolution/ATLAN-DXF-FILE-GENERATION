@@ -1,10 +1,10 @@
-"""Payload JSON -> separate CAD files: five view DXFs and one DXF per bill-of-materials component.
+"""Payload JSON -> five separate CAD files: plan view and front / back / left / right elevation DXFs.
 
-    python json_to_dxf.py source_data.json [output_dir] [--no-components] [--exploded-dims] [--assets DIR]
+    python json_to_dxf.py payload/source_data.json [output_dir] [--exploded-dims]
 
 The payload is the same JSON the PDF generator takes (geometry / input / material [/ project]).  It is mapped
-by the PDF project's ``data_mapper`` and the views are drawn by the PDF project's own drawing code, so the
-DXFs and the PDF always agree.  See README.md.
+by ``generator/data_mapper.py`` and the views are drawn by the drawing code in ``generator/Internal`` (a copy
+kept inside this project, so it runs on its own).  See README.md.
 """
 import argparse
 import datetime
@@ -16,6 +16,7 @@ import pdfgen_bridge
 from pdfgen_bridge import data_mapper
 
 HERE = Path(__file__).resolve().parent
+PAYLOAD_DIR = HERE / "payload"
 
 
 def drawing_from_json(payload):
@@ -38,18 +39,13 @@ def drawing_from_json(payload):
     return data
 
 
-def convert(data, out_dir, components=True, native_dims=True, assets_dir=None):
-    """Write views (+ components) and manifest.json into out_dir. Returns the DXF paths written."""
-    import component_export
+def convert(data, out_dir, native_dims=True):
+    """Write the five view DXFs and manifest.json into out_dir. Returns the DXF paths written."""
     import view_export
 
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     views = view_export.export_views(data, out_dir, native_dims)
-    rows = []
-    if components:
-        rows = component_export.export_components(
-            data, data["payload"], out_dir / "components", assets_dir or component_export.ASSET_DIR)
 
     manifest = {
         "generated": datetime.datetime.now().isoformat(timespec="seconds"),
@@ -60,38 +56,32 @@ def convert(data, out_dir, components=True, native_dims=True, assets_dir=None):
                      "rows_mm": data["rows_mm"]},
         "levels": {"fsl": data["fsl"], "top_of_storage": data["top_rl"], "base": data["base_rl"]},
         "views": views,
-        "components": rows,
     }
     (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8")
-
-    paths = [out_dir / v["file"] for v in views]
-    paths += [out_dir / "components" / r["file"] for r in rows if r["status"] == "ok"]
-    return paths
+    return [out_dir / v["file"] for v in views]
 
 
 def load_payload(path):
     source = Path(path)
-    if not source.is_file() and not source.is_absolute():
-        source = HERE / source
+    if not source.is_file() and not source.is_absolute():      # then next to this script, then in payload/
+        source = next((c for c in (HERE / source, PAYLOAD_DIR / source) if c.is_file()), HERE / source)
     with source.open(encoding="utf-8-sig") as stream:
         return source, json.loads(stream.read().replace(" ", " "))
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("payload", nargs="?", default=str(HERE / "source_data.json"))
+    parser.add_argument("payload", nargs="?", default=str(PAYLOAD_DIR / "source_data.json"),
+                        help="payload JSON: a path, or just a file name inside payload/")
     parser.add_argument("output", nargs="?", help="Output directory (default: output/<payload stem>)")
-    parser.add_argument("--no-components", action="store_true", help="only the five view DXFs")
     parser.add_argument("--exploded-dims", action="store_true",
                         help="draw dimensions as lines + text (as in the PDF) instead of DIMENSION entities")
-    parser.add_argument("--assets", help="folder with the supplier drawings / models (default: dxg files)")
     args = parser.parse_args()
 
     source, payload = load_payload(args.payload)
     data = drawing_from_json(payload)
-    paths = convert(data, args.output or HERE / "output" / source.stem, components=not args.no_components,
-                    native_dims=not args.exploded_dims, assets_dir=args.assets)
-    print(f"\n{len(paths)} DXF files written; manifest.json lists every file, quantity and geometry source.")
+    paths = convert(data, args.output or HERE / "output" / source.stem, native_dims=not args.exploded_dims)
+    print(f"\n{len(paths)} DXF files written; manifest.json lists every file and its plot scale and sheet.")
 
 
 if __name__ == "__main__":

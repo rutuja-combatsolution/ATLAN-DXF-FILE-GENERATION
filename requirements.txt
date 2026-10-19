@@ -1,5 +1,2 @@
 ezdxf>=1.4.4         # DXF writing (json_to_dxf.py and everything it imports)
-reportlab>=4.0        # the PDF project's drawing code (Internal/plan_view.py, elevation_view.py) is reused
-pymupdf>=1.24         # supplier part drawings (component_export.py) and the legacy pdf_to_dxf.py
-numpy>=1.26           # GLB model views, pdf_to_dxf.py
-pillow>=10.0          # pdf_to_dxf.py
+reportlab>=4.0        # the drawing code in generator/ (Internal/plan_view.py, elevation_view.py) draws on a ReportLab canvas

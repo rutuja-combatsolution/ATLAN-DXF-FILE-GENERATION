@@ -95,16 +95,16 @@ def _native_dims(u):
             c.add_dim((x1, ya), (x2, ya), (x1, y), 0, _text_override(value, (x2 - x1) * u),
                       size, arrow, 0 if ext_to is None else 3, 2.5)
             if label:
-                c.setFont(FN, 5)
-                c.setFillGray(0)
-                c.drawCentredString((x1 + x2) / 2, y - 6.5, label)
+                plan_view.dim_label(c, (x1 + x2) / 2, y - 6.5, label, x2 - x1 - 4, -1)   # as the PDF's dim_h
 
     def dim_v(c, x, y1, y2, value, label=None, ext_to=None, narrow=None, size=8,
-              narrow_below=False, arrow=4.5, skip_short=False):
+              narrow_below=False, arrow=4.5, skip_short=False, fit=False, mask=False):
         with c.layer("DIMENSIONS"):
             tw = stringWidth(value or "", FN, size)
-            if narrow or not value or (y2 - y1) < max(2 * arrow + 3, tw + 2 * arrow + 3):
-                return orig_v(c, x, y1, y2, value, label, ext_to, narrow, size, narrow_below, arrow, skip_short)
+            # (a masked dimension - lines of another dimension cross its text - is drawn the PDF's way)
+            if narrow or mask or not value or (y2 - y1) < max(2 * arrow + 3, tw + 2 * arrow + 3):
+                return orig_v(c, x, y1, y2, value, label, ext_to, narrow, size, narrow_below, arrow, skip_short,
+                              fit, mask)
             xa = x if ext_to is None else ext_to
             c.add_dim((xa, y1), (xa, y2), (x, y1), 90, _text_override(value, (y2 - y1) * u),
                       size, arrow, 0 if ext_to is None else 3, 2.5)
@@ -112,9 +112,7 @@ def _native_dims(u):
                 c.saveState()
                 c.translate(x - 2.5, (y1 + y2) / 2)
                 c.rotate(90)
-                c.setFont(FN, 5)
-                c.setFillGray(0)
-                c.drawCentredString(0, 10.5, label)
+                plan_view.dim_label(c, 0, 10.5, label, y2 - y1 - 4, 1, fit)      # as the PDF's dim_v
                 c.restoreState()
 
     return dim_h, dim_v
@@ -157,10 +155,13 @@ def _patched(u, native_dims=True):
 def _tidy_plan(rec):
     """Plan-only differences from the PDF: no centre info box, and manhole outlines in white."""
     prims = rec.prims
-    for i, p in enumerate(prims):                       # box = white rect, 0.6 pen, then its six text lines
+    for i, p in enumerate(prims):                       # box = white rect, 0.6 pen, then its text lines
         if (p.kind == "poly" and p.closed and _close(p.fill, (1, 1, 1)) and _close(p.stroke, (0, 0, 0))
-                and abs(p.lw - 0.6) < 0.01 and all(q.kind == "text" for q in prims[i + 1:i + 7])):
-            del prims[i:i + 7]
+                and abs(p.lw - 0.6) < 0.01 and prims[i + 1].kind == "text"):
+            n = 1                                       # a narrow module wraps the text: any number of lines
+            while i + n < len(prims) and prims[i + n].kind == "text":
+                n += 1
+            del prims[i:i + n]
             break
     for p in prims:
         if p.layer == "MANHOLES" and _close(p.fill, (1, 1, 1)):

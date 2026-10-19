@@ -1,9 +1,8 @@
 """A stand-in for ``reportlab.pdfgen.canvas.Canvas`` that records drawing calls and writes them as DXF.
 
-The PDF generator (``pdf gen/Internal/plan_view.py`` and ``elevation_view.py``) draws every view through a
+The drawing code (``generator/Internal/plan_view.py`` and ``elevation_view.py``) draws every view through a
 handful of canvas calls (line, rect, circle, paths, text, forms ...).  Handing it a ``Recorder`` instead of
-a PDF canvas gives the DXF export the *same* geometry, dimensions, callouts and arrows as the PDF, and any
-future change to the PDF drawing code reaches the DXF automatically.
+a PDF canvas gives the DXF export the same geometry, dimensions, callouts and arrows the PDF drawing shows.
 
 Coordinates arrive in PDF points; ``emit`` converts them to millimetres with ``u`` (mm per point).
 

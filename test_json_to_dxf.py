@@ -1,11 +1,9 @@
-"""Checks for the payload-driven DXF export (views + components).
+"""Checks for the payload-driven DXF export (the five view DXFs).
 
-    python -m unittest test_json_to_dxf.py            # fast set (~1-2 min)
-    ATLAN_SLOW_TESTS=1 python -m unittest ...         # also exports the 330k-segment cube module drawing
+    python -m unittest test_json_to_dxf.py
 """
 import copy
 import json
-import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -14,16 +12,16 @@ import ezdxf
 
 import json_to_dxf as generator
 import view_export
-import component_export
 
 HERE = Path(__file__).resolve().parent
-SOURCES = sorted(HERE.glob("source_data*.json"))
+PAYLOAD_DIR = HERE / "payload"
+SOURCES = sorted(PAYLOAD_DIR.glob("source_data*.json"))
 VIEW_FILES = {"plan_view.dxf", "front_elevation.dxf", "back_elevation.dxf", "left_elevation.dxf",
               "right_elevation.dxf"}
 
 
 def load(name="source_data.json"):
-    return json.loads((HERE / name).read_text(encoding="utf-8-sig"))
+    return json.loads((PAYLOAD_DIR / name).read_text(encoding="utf-8-sig"))
 
 
 def dim_values(doc):
@@ -35,18 +33,6 @@ def dim_values(doc):
             out["h"].add(round(abs(p3.x - p2.x)))
         else:
             out["v"].add(round(abs(p3.y - p2.y)))
-    return out
-
-
-def entity_widths(msp):
-    """Horizontal extent of every LINE / LWPOLYLINE."""
-    out = []
-    for e in msp:
-        if e.dxftype() == "LINE":
-            out.append(abs(e.dxf.end.x - e.dxf.start.x))
-        elif e.dxftype() == "LWPOLYLINE":
-            xs = [p[0] for p in e.get_points()]
-            out.append(max(xs) - min(xs))
     return out
 
 
@@ -82,7 +68,7 @@ class ViewTests(unittest.TestCase):
             with self.subTest(payload=source.name):
                 data = generator.drawing_from_json(load(source.name))
                 with tempfile.TemporaryDirectory() as folder:
-                    paths = generator.convert(data, folder, components=False)
+                    paths = generator.convert(data, folder)
                     self.assertEqual({p.name for p in paths}, VIEW_FILES)
                     self.assertTrue((Path(folder) / "manifest.json").is_file())
                     for path in paths:
@@ -93,7 +79,7 @@ class ViewTests(unittest.TestCase):
     def test_views_carry_the_pdf_annotations(self):
         data = generator.drawing_from_json(load())
         with tempfile.TemporaryDirectory() as folder:
-            generator.convert(data, folder, components=False)
+            generator.convert(data, folder)
             plan = ezdxf.readfile(Path(folder) / "plan_view.dxf")
             dims = dim_values(plan)
             self.assertIn(round(data["length"]), dims["h"])          # module length
@@ -130,7 +116,7 @@ class ViewTests(unittest.TestCase):
     def test_pipe_positions_follow_payload_and_mirror(self):
         data = generator.drawing_from_json(load())
         with tempfile.TemporaryDirectory() as folder:
-            generator.convert(data, folder, components=False)
+            generator.convert(data, folder)
             for stem, face, mirror, span in (("front_elevation", "bottom", False, data["length"]),
                                              ("back_elevation", "top", True, data["length"])):
                 doc = ezdxf.readfile(Path(folder) / f"{stem}.dxf")
@@ -148,7 +134,7 @@ class ViewTests(unittest.TestCase):
         data = generator.drawing_from_json(payload)
         self.assertEqual(data["rows_mm"], [780, 780, 430.0])
         with tempfile.TemporaryDirectory() as folder:
-            generator.convert(data, folder, components=False)
+            generator.convert(data, folder)
             doc = ezdxf.readfile(Path(folder) / "front_elevation.dxf")
             inserts = list(doc.modelspace().query("INSERT[name=='atlancube_face']"))
             self.assertEqual(len(inserts), data["cubes_long"] * 3)
@@ -162,69 +148,10 @@ class ViewTests(unittest.TestCase):
         self.assertEqual(data["pipes"], [])
         self.assertEqual(data["manholes"], [])
         with tempfile.TemporaryDirectory() as folder:
-            paths = generator.convert(data, folder, components=False)
+            paths = generator.convert(data, folder)
             plan = ezdxf.readfile(Path(folder) / "plan_view.dxf")
             self.assertFalse(plan.modelspace().query("CIRCLE"))
             self.assertEqual(len(paths), 5)
-
-
-class ComponentTests(unittest.TestCase):
-    def test_component_plan_follows_payload(self):
-        payload = load()
-        data = generator.drawing_from_json(payload)
-        plan = component_export.component_plan(data, payload)
-        keys = [p[1] for p in plan]
-        m = payload["material"]
-        self.assertEqual(len([k for k in keys if k.startswith("manhole")]), len(m["manhole"]))
-        self.assertEqual(len([k for k in keys if k.split("_")[0] in ("inlet", "outlet")]),
-                         len(m["inlet"]) + len(m["outlet"]))
-        self.assertIn("half_cube_module", keys)
-        self.assertNotIn("side_plate_half_height", keys)               # no_half_side_plates is 0
-        payload["material"]["no_single_clips"] = 0
-        keys = [p[1] for p in component_export.component_plan(data, payload)]
-        self.assertNotIn("single_connector", keys)
-
-    def test_parametric_and_plate_components(self):
-        payload = load()
-        payload["material"]["no_half_cubes"] = 0                       # skip the 330k-segment module drawing
-        payload["material"]["no_half_side_plates"] = 7                 # exercise the GLB route too
-        data = generator.drawing_from_json(payload)
-        with tempfile.TemporaryDirectory() as folder:
-            rows = component_export.export_components(data, payload, folder)
-            by_file = {r["file"]: r for r in rows}
-            self.assertTrue(all(r["status"] == "ok" for r in rows), rows)
-            self.assertEqual(by_file["side_plate_full_height.dxf"]["quantity"], payload["material"]["no_side_plates"])
-            self.assertEqual(by_file["side_plate_half_height.dxf"]["quantity"], 7)
-            self.assertEqual(by_file["single_connector.dxf"]["geometry"], "none (placeholder sheet)")
-            for r in rows:
-                doc = ezdxf.readfile(Path(folder) / r["file"])
-                self.assertFalse(doc.audit().errors)
-                self.assertEqual(doc.units, ezdxf.units.MM)
-
-            # supplier plate drawn 1:1: front view 1147 x 777 mm
-            plate = ezdxf.readfile(Path(folder) / "side_plate_full_height.dxf").modelspace()
-            self.assertTrue(any(abs(w - 1147) < 2 for w in entity_widths(plate)),
-                            "1147 mm overall width (supplier dimension) not found at 1:1")
-
-            # a pipe sheet carries the payload's diameter, level and wall
-            inlet = ezdxf.readfile(Path(folder) / "inlet_1_dn150.dxf").modelspace()
-            self.assertTrue(any(abs(c.dxf.radius - 75) < 1e-6 for c in inlet.query("CIRCLE")))
-            text = " ".join(t.dxf.text for t in inlet.query("TEXT"))
-            self.assertIn("RL 98.000", text)
-            self.assertIn("BACK", text)
-
-    @unittest.skipUnless(os.environ.get("ATLAN_SLOW_TESTS"), "set ATLAN_SLOW_TESTS=1 (about 1 minute)")
-    def test_half_cube_module_drawing(self):
-        payload = load()
-        data = generator.drawing_from_json(payload)
-        with tempfile.TemporaryDirectory() as folder:
-            rows = component_export.export_components(data, payload, folder)
-            row = next(r for r in rows if r["file"] == "half_cube_module.dxf")
-            self.assertEqual(row["status"], "ok")
-            self.assertEqual(row["quantity"], payload["material"]["no_half_cubes"])
-            msp = ezdxf.readfile(Path(folder) / "half_cube_module.dxf").modelspace()
-            self.assertTrue(any(abs(w - 1150) < 2 for w in entity_widths(msp)),
-                            "1150 mm overall width (supplier dimension) not found at 1:1")
 
 
 if __name__ == "__main__":

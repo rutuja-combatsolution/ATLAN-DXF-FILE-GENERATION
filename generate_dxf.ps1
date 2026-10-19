@@ -1,4 +1,4 @@
-# Usage: ./generate_dxf.ps1 [payload.json] [output_directory]
+# Usage: ./generate_dxf.ps1 [payload.json | name of a file in payload/] [output_directory]
 $runtimePath = Join-Path (Split-Path -Parent $PSScriptRoot) '.dxf-runtime'
 $previousPythonPath = $env:PYTHONPATH
 try {

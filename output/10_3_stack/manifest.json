@@ -1,0 +1,84 @@
+{
+  "generated": "2026-10-19T15:54:46",
+  "project": [],
+  "title": [
+    "ATLAN CUBE",
+    "ATLAN CUBE 1000L MODULE (TRIPLE STACK)",
+    "30-CUBES WIDE x 94-CUBES LONG - 8460m3",
+    "GENERAL ARRANGEMENT"
+  ],
+  "model_mm": {
+    "length": 108100,
+    "width": 34500,
+    "stack_height": 2340.0,
+    "cubes_long": 94,
+    "cubes_wide": 30,
+    "rows_mm": [
+      780,
+      780,
+      780
+    ]
+  },
+  "levels": {
+    "fsl": 100.0,
+    "top_of_storage": 99.34,
+    "base": 97.0
+  },
+  "views": [
+    {
+      "file": "plan_view.dxf",
+      "view": "PLAN VIEW",
+      "plot_scale": "1:100",
+      "sheet": "A0+",
+      "paper_mm": [
+        1184,
+        389
+      ],
+      "mm_per_pt": 35.278
+    },
+    {
+      "file": "front_elevation.dxf",
+      "view": "FRONT ELEVATION",
+      "plot_scale": "1:100",
+      "sheet": "A0+",
+      "paper_mm": [
+        1172,
+        68
+      ],
+      "mm_per_pt": 35.278
+    },
+    {
+      "file": "back_elevation.dxf",
+      "view": "BACK ELEVATION",
+      "plot_scale": "1:100",
+      "sheet": "A0+",
+      "paper_mm": [
+        1172,
+        68
+      ],
+      "mm_per_pt": 35.278
+    },
+    {
+      "file": "left_elevation.dxf",
+      "view": "LEFT ELEVATION",
+      "plot_scale": "1:100",
+      "sheet": "A2",
+      "paper_mm": [
+        395,
+        79
+      ],
+      "mm_per_pt": 35.278
+    },
+    {
+      "file": "right_elevation.dxf",
+      "view": "RIGHT ELEVATION",
+      "plot_scale": "1:100",
+      "sheet": "A2",
+      "paper_mm": [
+        395,
+        79
+      ],
+      "mm_per_pt": 35.278
+    }
+  ]
+}

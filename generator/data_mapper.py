@@ -23,6 +23,7 @@ PAGE3_IMAGES_DIR = os.path.join(_HERE, "withdimension", "withdimension")
 CUBE_MM = 1150            # plan footprint of one 1000L module
 LAYER_MM = 780            # height of one full layer
 EXC_MARGIN_MM = 525       # 500 clearance + 25 wrap, each side (ref: 31050 -> 32100)
+PIPE_EDGE_MM = 10         # gap kept between a pipe moved onto its wall and the wall's end
 
 # Sign convention of `horizontal_offset` (metres, measured from the wall centre).
 # back/front walls and manholes: the app's front view puts + on the LEFT (so the plan and every
@@ -68,11 +69,15 @@ def _pipe(p: dict, kind: str, length: float, width: float, base_rl: float) -> di
     else:
         along = width / 2 + (off_mm if OFFSET_BACK_POSITIVE else -off_mm)
         wall = width
-    if not 0.0 <= along <= wall:
-        import warnings
-        warnings.warn(f"{kind} {p.get('id', '')[:8]} on the {side} wall: horizontal_offset "
-                      f"{off_mm / 1000:g} m is outside the {wall / 1000:g} m wall - drawn at the edge")
-        along = min(max(along, 0.0), wall)
+    # the pipe must lie wholly on its wall: a wall too short for the offset (a long, one-cube-wide tank has
+    # 1.15 m end walls) keeps it just inside the end instead of letting half of it hang off the tank
+    lim = min(dia / 2 + PIPE_EDGE_MM, wall / 2)
+    if not lim <= along <= wall - lim:
+        if not 0.0 <= along <= wall:
+            import warnings
+            warnings.warn(f"{kind} {p.get('id', '')[:8]} on the {side} wall: horizontal_offset "
+                          f"{off_mm / 1000:g} m is outside the {wall / 1000:g} m wall - moved inside it")
+        along = min(max(along, lim), wall - lim)
     cell = along / CUBE_MM - 0.5            # fractional cube index whose centre is `along`
 
     return {
@@ -97,14 +102,24 @@ def _manhole_dims(kind: str, diameter) -> tuple:
     return ("square" if kind.startswith("square") else "circle"), dia, dia
 
 
+def _inside(pos: float, extent: float, size: float) -> float:
+    """`pos` moved, if need be, so a feature `size` wide centred on it lies within 0..extent
+    (centred when the tank is narrower than the feature)."""
+    if extent <= size:
+        return extent / 2
+    return min(max(pos, size / 2), extent - size / 2)
+
+
 def _manhole(m: dict, length: float, width: float, idx: int) -> dict:
     kind = str(m.get("manhole_type") or "circular_600")
     shape, w_mm, h_mm = _manhole_dims(kind, m.get("diameter"))
     off_mm = float(m.get("horizontal_offset") or 0) * 1000
+    # the whole manhole stays inside the tank: on a one-cube-wide tank the app's default offset would put
+    # its centre on the edge, with half the riser outside
     return {
         "id": m.get("id", ""),
-        "x": min(max(length / 2 + (off_mm if OFFSET_RIGHT_POSITIVE else -off_mm), 0), length),
-        "y": min(max(width / 2 + float(m.get("top_depth_offset") or 0) * 1000, 0), width),
+        "x": _inside(length / 2 + (off_mm if OFFSET_RIGHT_POSITIVE else -off_mm), length, w_mm),
+        "y": _inside(width / 2 + float(m.get("top_depth_offset") or 0) * 1000, width, h_mm),
         "shape": shape,
         "w_mm": w_mm, "h_mm": h_mm,          # true footprint: plan view, and riser width in the elevations
     }

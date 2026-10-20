@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-19T15:55:21",
+  "generated": "2026-10-20T22:27:08",
   "project": [],
   "title": [
     "ATLAN CUBE",
@@ -62,8 +62,8 @@
       "plot_scale": "1:20",
       "sheet": "A3",
       "paper_mm": [
-        103,
-        178
+        146,
+        189
       ],
       "mm_per_pt": 7.056
     },
@@ -73,8 +73,8 @@
       "plot_scale": "1:20",
       "sheet": "A3",
       "paper_mm": [
-        109,
-        178
+        146,
+        189
       ],
       "mm_per_pt": 7.056
     }

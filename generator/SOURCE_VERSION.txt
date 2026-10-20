@@ -1,1 +1,5 @@
-312194ecc0e99426fa8cfa9ad888bfbafc425018 2026-10-17
+89e382070e84e286ec6cd1948bb35c12f32629e5 2026-10-20
+Everything in generator/ is a byte-for-byte copy of the PDF project at that commit, except:
+  Internal/elevation_view.py  liner callout search `for _ in range(30)` -> `range(400)` (the PDF's 30 steps run out on a
+                              tall cover at the larger plot scales the DXF uses and the callout lands on the FSL label).
+Re-apply that one line after copying a newer elevation_view.py over it.

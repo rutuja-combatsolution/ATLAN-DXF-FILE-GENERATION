@@ -165,8 +165,9 @@ def _picture_pos(d, view, side_pos_mm, plan_axis):
     return full - side_pos_mm if MIRROR[view] else side_pos_mm
 
 
-def draw_elevation_view(c, d, x0, y0, s, view="front", span_dim=False, title=True):
-    """span_dim: add the overall width dimension under the tank (sheets that have no plan)."""
+def draw_elevation_view(c, d, x0, y0, s, view="front", span_dim=False, title=True, x_max=None):
+    """span_dim: add the overall width dimension under the tank (sheets that have no plan).
+    x_max: right-most x (pt) the callout text may reach (the sheet frame); None = no limit."""
     from data_mapper import fmt_rl
 
     face, side_l, side_r = VIEWS[view]
@@ -282,14 +283,15 @@ def draw_elevation_view(c, d, x0, y0, s, view="front", span_dim=False, title=Tru
     col = x0 - shift - 24
     dim_obst = []                                      # what the dimensions occupy (callouts keep clear)
 
-    def column(y_a, y_b, value, label):
-        nonlocal col
-        dim_v(c, col, y_a, y_b, value, label, ext_to=x0 - 9)
-        dim_obst.append((col - 14, y_a, col + 3, y_b))
-        dim_obst.extend((col - 3, y_ - 1, x0 - 9, y_ + 1) for y_ in (y_a, y_b))   # extension lines
-        col -= COL_PITCH
+    specs = []                                         # the columns, nearest the tank first
 
-    column(y0, y_top, f"{d['stack_h']:.0f}", f"{d['stack_label']} (1000L)")
+    def column(y_a, y_b, value, label):
+        specs.append((y_a, y_b, value, label))
+
+    # the labels shrink to the dimension they name (a short stack at a small scale), and fall back to a
+    # shorter wording when even the smallest size would run across the lines at the ends of the dimension
+    column(y0, y_top, f"{d['stack_h']:.0f}",
+           [f"{d['stack_label']} (1000L)", d['stack_label'], "STACK"])
     column(y_top, y_fsl, f"{d['cover']:.0f}", "COVER")
 
     items = level_items(d)
@@ -304,13 +306,28 @@ def draw_elevation_view(c, d, x0, y0, s, view="front", span_dim=False, title=Tru
         keep.append(text_block(c, x0 - shift - 24 + 4, y_fsl + 22 + 7.5 * (len(notes) - 1), notes,
                                size=6.5, align="r", leading=7.5))
 
-    column(y0, y_fsl, f"{d['exc_depth']:.0f}", "EXCAVATION DEPTH")
+    column(y0, y_fsl, f"{d['exc_depth']:.0f}", ["EXCAVATION DEPTH", "EXC. DEPTH", "DEPTH"])
+
+    # The extension lines of a column run across every column nearer the tank, so a label / value is
+    # fitted into the longest stretch of its own dimension that none of them crosses (the inlet invert
+    # line often cuts through the stack dimension).
+    for i, (y_a, y_b, value, label) in enumerate(specs):
+        cross = [y_ for later in specs[i + 1:] for y_ in later[:2] if y_a < y_ < y_b]
+        dim_v(c, col, y_a, y_b, value, label, ext_to=x0 - 9, fit_label=True, label_lines=1, cross=cross)
+        dim_obst.append((col - 14, y_a, col + 3, y_b))
+        dim_obst.extend((col - 3, y_ - 1, x0 - 9, y_ + 1) for y_ in (y_a, y_b))   # extension lines
+        col -= COL_PITCH
 
     # ---- callouts -------------------------------------------------------------------
     # Every block is placed on a spot that touches no riser, no line and no other block;
     # blocks that have no clear spot (very small tanks) get a white mask as last resort.
     keep += dim_obst
-    keep.append((x1 + 24, y_top - 2, x1 + 40, y_top + ext + 2))       # the "500" dimension
+    # the "500" dimension: its text sits left of the line on a tall dimension, right of it on a short
+    # one (as dim_v draws it) - the text blocks leaders, the lines are in keep_leaders below
+    t500 = stringWidth("500", FN, 8)
+    m500 = y_top + ext / 2
+    x_t = x1 + 29 if ext < max(12, t500 + 12) else x1 + 16
+    keep.append((x_t, m500 - t500 / 2 - 2, x_t + 9, m500 + t500 / 2 + 2))
     for p in d["pipes"]:                                              # side stubs + their arrows
         py_ = y0 + p["z"] * s
         half_ = max(p["diameter"] * s, 3.5) / 2 + 6
@@ -358,8 +375,9 @@ def draw_elevation_view(c, d, x0, y0, s, view="front", span_dim=False, title=Tru
         c.rect(box[0], box[1], box[2] - box[0], box[3] - box[1], stroke=0, fill=1)
 
     # base RL
-    keep.append(text_block(c, x0 - 34, y0 - 20, ["ATLAN CUBE", f"BASE RL: {fmt_rl(d['base_rl'])}"],
-                           size=7, align="r", leading=8))
+    base_box = text_block(c, x0 - 34, y0 - 20, ["ATLAN CUBE", f"BASE RL: {fmt_rl(d['base_rl'])}"],
+                          size=7, align="r", leading=8)
+    keep.append(base_box)
     leader(c, x0 - 32, y0 - 17.6, x0 + 3, y0 - 1)
     below_leaders = [((x0 - 32, y0 - 17.6), (x0 - 27, y0 - 17.6)), ((x0 - 27, y0 - 17.6), (x0 + 3, y0 - 1))]
 
@@ -443,16 +461,23 @@ def draw_elevation_view(c, d, x0, y0, s, view="front", span_dim=False, title=Tru
     liner = ["NON-WOVEN", "GEO-FAB & LDPE LINER", "EXTENDED 500mm", "ABOVE TOP OF STORAGE"]
     lw = max(stringWidth(t, FN, SZ) for t in liner)
     ly = y_top + ext + 54
-    for _ in range(30):
+    for _ in range(400):                                 # DXF project: the PDF's 30 steps run out on a tall cover at a large plot scale
         if clear(block_box(x1 + 6 - lw, ly, lw, len(liner))):
             break
         ly += 6
     keep.append(block_box(x1 + 6 - lw, ly, lw, len(liner)))
     text_block(c, x1 + 6, ly, liner, size=SZ, align="r", leading=LD)
-    leader(c, x1 + 9, ly - (len(liner) - 1) * LD - 1.5, x1 + 5, y_top + ext)   # from under the last line
+    liner_y = ly - (len(liner) - 1) * LD - 1.5
+    leader(c, x1 + 9, liner_y, x1 + 5, y_top + ext)    # from under the last line
     dim_v(c, x1 + 26, y_top, y_top + ext, "500", ext_to=x1 + 9)
 
-    keep_leaders = []                                  # leader segments already drawn
+    # lines a callout's TEXT must stay off: the geofab wrap lines beside the tank, the liner leader and
+    # the 500 dimension. (Leaders may cross them; only text is kept clear, so a tank too narrow for its
+    # callouts sends them past the 500 dimension instead of over these lines.)
+    keep_leaders = [((x, y0 - 9), (x, y_top + ext + 4)) for x in (x0 - 9, x0 - 5, x1 + 5, x1 + 9)]
+    keep_leaders += [((x1 + 9, liner_y), (x1 + 4, liner_y)), ((x1 + 4, liner_y), (x1 + 5, y_top + ext)),
+                     ((x1 + 26, y_top - 9), (x1 + 26, y_top + ext + 9)),
+                     ((x1 + 9, y_top), (x1 + 29, y_top)), ((x1 + 9, y_top + ext), (x1 + 29, y_top + ext))]
 
     def leader_segs(xl, yb, w, from_left):
         """The two segments of the leader of a block (landing + diagonal to the top edge)."""
@@ -471,27 +496,35 @@ def draw_elevation_view(c, d, x0, y0, s, view="front", span_dim=False, title=Tru
         block nor its leader touches a riser, another block or another leader."""
         w = max(stringWidth(t, FN, SZ) for t in lines)
         n = len(lines)
-        levels = [y_top + 28 + k * (n * LD + 6) for k in range(4)]
+        levels = [y_top + 28 + k * (n * LD + 6) for k in range(6)]
         xs_ = [pref_x]
         for k in range(1, 80):
             xs_ += [pref_x + 8 * k, pref_x - 8 * k]
         # normally above the tank; a tank narrower than its callouts lets them sit past its end
-        lo, hi = x0 - 4, max(x1 + 6 - w, x1 + 150 - w)
-        for yb in levels:
-            for xl in xs_:
-                if not (lo <= xl <= hi):
-                    continue
-                box = block_box(xl, yb, w, n)
-                if not clear(box):
-                    continue
-                segs = leader_segs(xl, yb, w, from_left)
-                if any(_seg_hits_box(a, b, o) for a, b in segs for o in keep):
-                    continue
-                if any(_seg_hits_box(a, b, box) for a, b in keep_leaders):
-                    continue
-                keep.append(box)
-                keep_leaders.extend(segs)
-                return xl, yb, w, False
+        lo, hi = x0 - 4, max(x1 + 6 - w, x1 + 220 - w)
+        if x_max is not None:
+            hi = min(hi, x_max - w - 2)
+        # first choice: a leader that crosses nothing; failing that (a riser at the tank's end blocks the
+        # way) a leader may cross a riser - the text itself never sits on a riser, line or other text
+        for strict in (True, False):
+            hard = keep if strict else [o for o in keep if o not in riser_boxes]
+            for yb in levels:
+                for xl in xs_:
+                    if not (lo <= xl <= hi):
+                        continue
+                    box = block_box(xl, yb, w, n)
+                    if not clear(box):
+                        continue
+                    segs = leader_segs(xl, yb, w, from_left)
+                    if any(_seg_hits_box(a, b, o) for a, b in segs for o in hard):
+                        continue
+                    if any(_seg_hits_box(a, b, box) for a, b in segs):      # nor through its own text
+                        continue
+                    if any(_seg_hits_box(a, b, box) for a, b in keep_leaders):
+                        continue
+                    keep.append(box)
+                    keep_leaders.extend(segs)
+                    return xl, yb, w, False
         xl, yb = min(max(pref_x, lo), max(lo, hi)), levels[0]
         keep.append(block_box(xl, yb, w, n))
         keep_leaders.extend(leader_segs(xl, yb, w, from_left))
@@ -517,8 +550,11 @@ def draw_elevation_view(c, d, x0, y0, s, view="front", span_dim=False, title=Tru
     if span_dim:
         dim_h(c, x0, x1, y0 - 26, f"{span:.0f}", ext_to=y0 - 9)
     if title:
-        underlined_title(c, f"{view.upper()} ELEVATION VIEW", x0 + tw / 2,
-                         y0 - (48 if span_dim else 34) - row_h * used, size=14 if span_dim else 11)
+        t_txt, t_sz = f"{view.upper()} ELEVATION VIEW", 14 if span_dim else 11
+        t_y = y0 - (48 if span_dim else 34) - row_h * used
+        if x0 + tw / 2 - stringWidth(t_txt, FB, t_sz) / 2 < base_box[2] + 2 and t_y + 0.8 * t_sz > base_box[1] - 1:
+            t_y = base_box[1] - 1 - 0.8 * t_sz - 1       # a tank narrower than the title: drop it under the BASE RL note
+        underlined_title(c, t_txt, x0 + tw / 2, t_y, size=t_sz)
     return {"top": y_top, "fsl": y_fsl, "used_top": max([y_fsl] + [b[3] for b in keep]),
             "used_x": (min([x0] + [b[0] for b in keep]), max([x1] + [b[2] for b in keep]))}
 
@@ -542,4 +578,4 @@ def draw_elevation_page(c, d, view, bx, by, bw, bh):
     h = base + d["stack_h"] * s + max(ELEV_ABOVE, d["cover"] * s + 44)
     x0 = bx + (bw - (need_l + span * s + need_r)) / 2 + need_l
     y0 = by + (bh - h) / 2 + base
-    draw_elevation_view(c, d, x0, y0, s, view=view, span_dim=True)
+    draw_elevation_view(c, d, x0, y0, s, view=view, span_dim=True, x_max=bx + bw - 8)

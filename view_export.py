@@ -13,6 +13,7 @@ import math
 from contextlib import contextmanager
 
 import ezdxf
+from reportlab.lib import colors
 from reportlab.pdfbase.pdfmetrics import stringWidth
 
 import pdfgen_bridge as bridge
@@ -86,34 +87,51 @@ def _native_dims(u):
     orig_h, orig_v = _ORIG["dim_h"], _ORIG["dim_v"]
 
     def dim_h(c, x1, x2, y, value, label=None, ext_to=None, narrow=None, size=8,
-              text_right=False, arrow=4.5, skip_short=False):
+              text_right=False, arrow=4.5, skip_short=False, fit_label=False, value_above=False):
         with c.layer("DIMENSIONS"):
             tw = stringWidth(value or "", FN, size)
             if narrow or not value or (x2 - x1) < max(2 * arrow + 3, tw + 2 * arrow + 3):
-                return orig_h(c, x1, x2, y, value, label, ext_to, narrow, size, text_right, arrow, skip_short)
+                return orig_h(c, x1, x2, y, value, label, ext_to, narrow, size, text_right, arrow, skip_short,
+                              fit_label, value_above)
             ya = y if ext_to is None else ext_to
             c.add_dim((x1, ya), (x2, ya), (x1, y), 0, _text_override(value, (x2 - x1) * u),
                       size, arrow, 0 if ext_to is None else 3, 2.5)
-            if label:
-                plan_view.dim_label(c, (x1 + x2) / 2, y - 6.5, label, x2 - x1 - 4, -1)   # as the PDF's dim_h
+            if label:                                                                   # as the PDF's dim_h
+                fit = plan_view._fit_label(label, x2 - x1 - 4) if fit_label else ([label], 5)
+                if fit:
+                    lines, fs = fit
+                    c.setFillColor(colors.black)
+                    c.setFont(FN, fs)
+                    for k, t in enumerate(lines):
+                        c.drawCentredString((x1 + x2) / 2, y - (6.5 if len(lines) == 1 else 6.0) - k * (fs + 0.6), t)
 
     def dim_v(c, x, y1, y2, value, label=None, ext_to=None, narrow=None, size=8,
-              narrow_below=False, arrow=4.5, skip_short=False, fit=False, mask=False):
+              narrow_below=False, arrow=4.5, skip_short=False, fit_label=False, label_lines=3, cross=None):
         with c.layer("DIMENSIONS"):
             tw = stringWidth(value or "", FN, size)
-            # (a masked dimension - lines of another dimension cross its text - is drawn the PDF's way)
-            if narrow or mask or not value or (y2 - y1) < max(2 * arrow + 3, tw + 2 * arrow + 3):
+            # a DIMENSION entity keeps its value at the middle of the line; where a line of another dimension
+            # crosses the middle the PDF moves the value along the dimension, so that one is drawn the PDF's way
+            crossed = bool(cross) and any(abs(yc - (y1 + y2) / 2) < tw / 2 + 2 for yc in cross)
+            if narrow or crossed or not value or (y2 - y1) < max(2 * arrow + 3, tw + 2 * arrow + 3):
                 return orig_v(c, x, y1, y2, value, label, ext_to, narrow, size, narrow_below, arrow, skip_short,
-                              fit, mask)
+                              fit_label, label_lines, cross)
             xa = x if ext_to is None else ext_to
             c.add_dim((xa, y1), (xa, y2), (x, y1), 90, _text_override(value, (y2 - y1) * u),
                       size, arrow, 0 if ext_to is None else 3, 2.5)
-            if label:
-                c.saveState()
-                c.translate(x - 2.5, (y1 + y2) / 2)
-                c.rotate(90)
-                plan_view.dim_label(c, 0, 10.5, label, y2 - y1 - 4, 1, fit)      # as the PDF's dim_v
-                c.restoreState()
+            if label:                                                                   # as the PDF's dim_v
+                runs = plan_view._clear_runs(y1, y2, cross)
+                fit = (plan_view._fit_label(label, runs[0][1], max_lines=label_lines) if fit_label
+                       else ([label if isinstance(label, str) else label[0]], 5))
+                if fit:
+                    lines, fs = fit
+                    c.saveState()
+                    c.translate(x - 2.5, (y1 + y2) / 2)
+                    c.rotate(90)
+                    c.setFillColor(colors.black)
+                    c.setFont(FN, fs)
+                    for k, t in enumerate(lines):
+                        c.drawCentredString(runs[0][0] if fit_label else 0, 10.5 + k * (fs + 0.6), t)
+                    c.restoreState()
 
     return dim_h, dim_v
 

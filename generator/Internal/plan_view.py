@@ -110,45 +110,53 @@ def leader(c, x0, y0, ax, ay):
     c.line(x0 + land, y0, ax, ay)
 
 
-def dim_label(c, x, y, label, avail, direction=-1, fit=False, size=5, leading=6):
-    """Small caption of a dimension, centred on x at baseline y.
+def _fit_label(text, span, size=5.0, max_lines=3, min_size=4.0):
+    """(lines, font size) that fit inside `span` pt, or None (the caller then leaves the label out).
+    `text` is a string, or a list of alternatives from fullest to shortest: the first one that fits
+    is used, so a small tank gets "STACK" where a big one gets "SINGLE STACK (1000L)"."""
+    for alt in ([text] if isinstance(text, str) else text):
+        fit = _fit_one(alt, span, size, max_lines, min_size)
+        if fit:
+            return fit
+    return None
 
-    avail = room along the dimension line. A caption that fits is drawn as is. One that does not is
-    shrunk to fit when ``fit`` is set (down to 3 pt), else wrapped at its spaces onto extra lines that stack
-    away from the dimension line (direction -1 = downwards, +1 = upwards in the current frame).
-    (Added in the DXF project - the PDF project's dim_h / dim_v drew the caption unconditionally.)
-    """
-    c.setFillColor(colors.black)
-    width = stringWidth(label, FN, size)
-    if avail <= 0 or width <= avail:
-        c.setFont(FN, size)
-        c.drawCentredString(x, y, label)
-        return
-    if fit:
-        c.setFont(FN, max(3.0, size * avail / width))
-        c.drawCentredString(x, y, label)
-        return
-    lines, line = [], ""
-    for word in label.split():
-        trial = f"{line} {word}".strip()
-        if line and stringWidth(trial, FN, size) > avail:
-            lines.append(line)
-            line = word
-        else:
-            line = trial
-    lines.append(line)
-    c.setFont(FN, size)
-    for i, text in enumerate(lines):
-        c.drawCentredString(x, y + direction * i * leading, text)
+
+def _fit_one(text, span, size, max_lines, min_size):
+    """One line if it fits by shrinking a little, else wrapped at spaces to at most max_lines lines."""
+    words = text.split()
+    sz = size
+    while sz >= min_size - 1e-6:
+        if stringWidth(text, FN, sz) <= span:
+            return [text], sz
+        sz -= 0.25
+    sz = size
+    while sz >= min_size - 1e-6:
+        lines, cur = [], ""
+        for w in words:
+            t = (cur + " " + w).strip()
+            if not cur or stringWidth(t, FN, sz) <= span:
+                cur = t
+            else:
+                lines.append(cur)
+                cur = w
+        lines.append(cur)
+        if len(lines) <= max_lines and all(stringWidth(t, FN, sz) <= span for t in lines):
+            return lines, sz
+        sz -= 0.25
+    return None
 
 
 def dim_h(c, x1, x2, y, value, label=None, ext_to=None, narrow=None, size=8,
-          text_right=False, arrow=4.5, skip_short=False):
+          text_right=False, arrow=4.5, skip_short=False, fit_label=False, value_above=False):
     """Horizontal dimension. value above the line, label (small) below. ext_to = y of the feature.
 
     narrow = ("MIN.", "500"): arrows sit outside the extension lines and the text
     goes left of x1 (or right of x2 when text_right). A segment too short for its
     value gets the outside-arrow form; skip_short drops its text (chain dimensions).
+    fit_label: a label longer than the dimension wraps to fit between the extension lines
+    (left out if it cannot) instead of running across them.
+    value_above: a segment too short for its value keeps the value centred above the line
+    instead of to the right of it (where a neighbouring dimension's text may be).
     """
     c.setStrokeColor(colors.black)
     c.setLineWidth(0.5)
@@ -170,7 +178,10 @@ def dim_h(c, x1, x2, y, value, label=None, ext_to=None, narrow=None, size=8,
             put(tx, y + 2, narrow[0])
             put(tx, y - size, narrow[1])
         elif value and not skip_short:
-            c.drawString(x2 + 11, y - size / 2.5, value)
+            if value_above:
+                c.drawCentredString((x1 + x2) / 2, y + 2.5, value)
+            else:
+                c.drawString(x2 + 11, y - size / 2.5, value)
         return
     c.line(x1, y, x2, y)
     arrowhead(c, x1, y, "l", arrow)
@@ -179,17 +190,32 @@ def dim_h(c, x1, x2, y, value, label=None, ext_to=None, narrow=None, size=8,
     c.setFont(FN, size)
     c.drawCentredString((x1 + x2) / 2, y + 2.5, value)
     if label:
-        dim_label(c, (x1 + x2) / 2, y - 6.5, label, x2 - x1 - 4, -1)
+        fit = _fit_label(label, x2 - x1 - 4) if fit_label else ([label], 5)
+        if fit:
+            lines, fs = fit
+            c.setFont(FN, fs)
+            for k, t in enumerate(lines):
+                c.drawCentredString((x1 + x2) / 2, y - (6.5 if len(lines) == 1 else 6.0) - k * (fs + 0.6), t)
+
+
+def _clear_runs(y1, y2, cross, pad=2.5):
+    """Stretches of a vertical dimension (y1..y2) that no line crosses: [(centre offset from the middle,
+    usable length)], longest first. `cross` = y of lines that run across the dimension."""
+    ys = [y1] + sorted(y for y in (cross or []) if y1 < y < y2) + [y2]
+    runs = [((a + b) / 2 - (y1 + y2) / 2, b - a - 2 * pad) for a, b in zip(ys, ys[1:])]
+    return sorted(runs, key=lambda r: -r[1])
 
 
 def dim_v(c, x, y1, y2, value, label=None, ext_to=None, narrow=None, size=8,
-          narrow_below=False, arrow=4.5, skip_short=False, fit=False, mask=False):
+          narrow_below=False, arrow=4.5, skip_short=False, fit_label=False, label_lines=3, cross=None):
     """Vertical dimension (y1 < y2). value/label are rotated and sit left of the line.
 
     narrow = "MIN. 500": arrows sit outside the extension lines; text above y2,
     or below y1 when narrow_below. Short segments behave as in dim_h.
-    fit = shrink a too-long label instead of wrapping it; mask = white backing behind the value so
-    lines of another dimension crossing it do not strike it through.
+    fit_label: as in dim_h - a label longer than the dimension shrinks / wraps (up to label_lines lines,
+    stacked to the left) or, given as a list of alternatives, falls back to a shorter wording.
+    cross: y of other lines that run across this dimension (the extension lines of dimensions further out):
+    the label is fitted into the longest stretch they leave, and the value moves off any of them.
     """
     c.setStrokeColor(colors.black)
     c.setLineWidth(0.5)
@@ -223,17 +249,26 @@ def dim_v(c, x, y1, y2, value, label=None, ext_to=None, narrow=None, size=8,
     c.line(x, y1, x, y2)
     arrowhead(c, x, y1, "d", arrow)
     arrowhead(c, x, y2, "u", arrow)
+    runs = _clear_runs(y1, y2, cross)
+    vshift = 0.0
+    if cross and any(abs(yc - (y1 + y2) / 2) < tw_ / 2 + 2 for yc in cross):   # a line would cross the value
+        roomy = [r for r in runs if r[1] >= tw_]
+        if roomy:
+            vshift = roomy[0][0]
     c.saveState()
     c.translate(x - 2.5, (y1 + y2) / 2)
     c.rotate(90)
-    if mask:
-        c.setFillColor(colors.white)
-        c.rect(-tw_ / 2 - 1.5, -1.5, tw_ + 3, size + 1.5, stroke=0, fill=1)
     c.setFillColor(colors.black)
     c.setFont(FN, size)
-    c.drawCentredString(0, 0, value)
+    c.drawCentredString(vshift, 0, value)
     if label:
-        dim_label(c, 0, 10.5, label, y2 - y1 - 4, 1, fit)
+        fit = (_fit_label(label, runs[0][1], max_lines=label_lines) if fit_label
+               else ([label if isinstance(label, str) else label[0]], 5))
+        if fit:
+            lines, fs = fit
+            c.setFont(FN, fs)
+            for k, t in enumerate(lines):
+                c.drawCentredString(runs[0][0] if fit_label else 0, 10.5 + k * (fs + 0.6), t)
     c.restoreState()
 
 
@@ -503,19 +538,22 @@ def draw_plan_view(c, d, x0, y0, s, floor_y=None):
     top_base = red[3] + (ARROW_OUT if "top" in sides else 8)
     y_mod = top_base + 12
     y_exc = top_base + 32
-    dim_h(c, red[0], red[2], y_exc, f"{d['exc_length']:.0f}", "EXCAVATION LENGTH", ext_to=red[3])
+    dim_h(c, red[0], red[2], y_exc, f"{d['exc_length']:.0f}", "EXCAVATION LENGTH", ext_to=red[3],
+          fit_label=True)
     dim_h(c, red[0], mod[0], y_mod, "", narrow=("MIN.", "500"), ext_to=red[3])
     dim_h(c, mod[2], red[2], y_mod, "", narrow=("MIN.", "500"), ext_to=red[3], text_right=True)
     dim_h(c, mod[0], mod[2], y_mod, f"{d['length']:.0f}",
-          f"({d['cubes_long']}x) AtlanCUBE @1150mm 1000L MODULE", ext_to=mod[3] + 7.5)
+          f"({d['cubes_long']}x) AtlanCUBE @1150mm 1000L MODULE", ext_to=mod[3] + 7.5, fit_label=True,
+          value_above=True)
 
     # ---- dimensions: module width / excavation width (right columns) ------------
     right_base = red[2] + (ARROW_OUT if "right" in sides else 8)
     x_mod = right_base + 34
     x_exc = right_base + 66
-    dim_v(c, x_exc, red[1], red[3], f"{d['exc_width']:.0f}", "EXCAVATION WIDTH", ext_to=red[2])
+    dim_v(c, x_exc, red[1], red[3], f"{d['exc_width']:.0f}", "EXCAVATION WIDTH", ext_to=red[2],
+          fit_label=True)
     dim_v(c, x_mod, mod[1], mod[3], f"{d['width']:.0f}",
-          f"({d['cubes_wide']}x) AtlanCUBE @1150mm 1000L MODULE", ext_to=mod[2] + 7.5)
+          f"({d['cubes_wide']}x) AtlanCUBE @1150mm 1000L MODULE", ext_to=mod[2] + 7.5, fit_label=True)
     dim_v(c, x_mod, red[1], mod[1], "", narrow="MIN. 500", ext_to=red[2], narrow_below=True)
     dim_v(c, x_mod, mod[3], red[3], "", narrow="MIN. 500", ext_to=red[2])
 

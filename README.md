@@ -31,6 +31,15 @@ output/<payload>/
   (`generator/SOURCE_VERSION.txt` gives the commit it was taken from). Nothing outside this folder is needed and
   there is no `ATLAN_PDF_GEN_DIR` / `../pdf gen` lookup any more. The two projects now evolve separately: a
   drawing change in the PDF project reaches the DXF only if it is copied into `generator/` by hand.
+* **Syncing a PDF change.** Copy `data_mapper.py`, `Internal/plan_view.py` and `Internal/elevation_view.py` over the
+  files in `generator/` as they are (the DXF-specific code lives outside `generator/`), re-apply the one line listed in
+  `generator/SOURCE_VERSION.txt`, update that file, then run the checks. The only code that depends on the signatures
+  of the PDF's `dim_h` / `dim_v` (and their label-fitting helpers) is `_native_dims` in `view_export.py`; if the PDF
+  adds an argument to either, add it there too.
+* The PDF's text-overlap handling (dimension captions that shrink / wrap / fall back to a shorter wording, labels fitted
+  into the stretch of a dimension that no other line crosses, callouts placed clear of risers and leaders) and its
+  placement rules for manholes and inlet / outlet pipes (kept wholly inside the tank on a long, narrow module) are
+  therefore part of the DXF output.
 
 ## Views
 

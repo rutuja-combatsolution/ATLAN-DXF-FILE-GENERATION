@@ -375,7 +375,7 @@ def draw_elevation_view(c, d, x0, y0, s, view="front", span_dim=False, title=Tru
         c.rect(box[0], box[1], box[2] - box[0], box[3] - box[1], stroke=0, fill=1)
 
     # base RL
-    base_box = text_block(c, x0 - 34, y0 - 20, ["ATLAN CUBE", f"BASE RL: {fmt_rl(d['base_rl'])}"],
+    base_box = text_block(c, x0 - 34, y0 - 20, ["AtlanCube", f"BASE RL: {fmt_rl(d['base_rl'])}"],
                           size=7, align="r", leading=8)
     keep.append(base_box)
     leader(c, x0 - 32, y0 - 17.6, x0 + 3, y0 - 1)
@@ -563,9 +563,10 @@ def draw_elevation_view(c, d, x0, y0, s, view="front", span_dim=False, title=Tru
 # ONE ELEVATION PER SHEET (back / left / right extra sheets)
 # ======================================================
 
-def draw_elevation_page(c, d, view, bx, by, bw, bh):
+def draw_elevation_page(c, d, view, bx, by, bw, bh, max_s=0.10):
     """Annotated elevation, its annotations centred in the box (bx, by, bw, bh) and scaled to
-    fill the sheet (an end-on view of a long tank would be unreadable at the front-view scale)."""
+    fill the sheet (an end-on view of a long tank would be unreadable at the front-view scale).
+    Returns the scale used (pt per mm); max_s caps it (DXF project: the sheet export picks a plot scale)."""
     span = d["width"] if view in ("left", "right") else d["length"]
     need_l = left_need(d, VIEWS[view][1])
     need_r = right_need(d, view)
@@ -574,8 +575,9 @@ def draw_elevation_page(c, d, view, bx, by, bw, bh):
     s = min((bw - need_l - need_r - pad) / span,
             (bh - pad - base - ELEV_ABOVE) / d["stack_h"],
             (bh - pad - base - 44) / (d["stack_h"] + d["cover"]),
-            0.10)
+            max_s)
     h = base + d["stack_h"] * s + max(ELEV_ABOVE, d["cover"] * s + 44)
     x0 = bx + (bw - (need_l + span * s + need_r)) / 2 + need_l
     y0 = by + (bh - h) / 2 + base
     draw_elevation_view(c, d, x0, y0, s, view=view, span_dim=True, x_max=bx + bw - 8)
+    return s

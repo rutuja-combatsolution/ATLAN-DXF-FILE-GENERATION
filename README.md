@@ -1,7 +1,7 @@
 # JSON to separate CAD files (DXF)
 
-One payload JSON in, five independent DXF files out (plan view and front / back / left / right elevations) -
-the same payload the PDF generator takes.
+One payload JSON in, five independent DXF files out (plan view and front / back / left / right elevations) plus one
+combined `general_arrangement.dxf` with the PDF's sheets 1-4 - the same payload the PDF generator takes.
 
 ```powershell
 python -m pip install -r requirements.txt
@@ -16,8 +16,53 @@ python -m unittest test_json_to_dxf.py
 ```
 output/<payload>/
   plan_view.dxf  front_elevation.dxf  back_elevation.dxf  left_elevation.dxf  right_elevation.dxf
-  manifest.json                       the five files with their plot scale and sheet
+  general_arrangement.dxf             the PDF's sheets 1-4 in one file (below)
+  manifest.json                       every file with its plot scale and sheet
 ```
+
+## Combined sheet: `general_arrangement.dxf`
+
+```powershell
+python -m unittest test_sheet_export.py
+```
+
+The PDF's pages 1-4 in one DXF: four identical A3 sheets in a column, sheet 1 at the top down to sheet 4. Sheet 1 = plan +
+front elevation + tank storage capacity, parts list, site level confirmation box, notes, approval stamp; sheets 2-4 = back,
+left, right elevation. Every sheet has the PDF's frame with grid references, tolerance bar, revision table, client /
+confidentiality cells, drawn / check block, logo and project / title block (filled from the payload; scale = the plot scale).
+The PDF's section sheet (5) and bill of materials (6) are not drawn.
+
+* It is the PDF's own sheet code (`generator/main.py`, `page1.py`, ...) run through `dxf_canvas.Recorder` by
+  `sheet_export.py`, so the sheets match the PDF and follow it when `generator/` is re-synced.
+* Model space is 1:1 in mm. A sheet is its A3 frame x N (it plots at 1:N on A3) and all four sheets share one N: the
+  smallest standard scale at which the general arrangement (the busiest sheet) still fits (printed in the title block and
+  in `manifest.json`). The narrow end elevations are therefore drawn at the same scale as the plan, not enlarged like in
+  the PDF. On a very long tank N gets large (1:400 and more) and, as in the PDF, the details it clamps for legibility
+  (525 mm excavation margin, small pipes) are drawn oversize.
+* Layers `FRAME`, `TITLE_BLOCK`, `TABLES` hold the sheet furniture, the view layers are the same as in the single-view
+  files. Like `plan_view.dxf`, the plan has no centre info box.
+* The logo is the PDF's `generator/Atlan-Stormwater-LogoR.png`, outlined to vector shapes (one solid-filled HATCH,
+  `dxf_canvas.trace_image`), so it is inside the DXF - no linked image file - and stays sharp at any zoom. A new logo
+  PNG (one colour, transparent background) is picked up by copying it over that file.
+
+## Combined 3D tank
+
+```powershell
+python tank_3d.py payloads/01_double_13x3.json              # -> output/01_double_13x3/tank_3d.dxf
+python -m unittest test_tank_3d.py
+```
+
+One more DXF per payload: the whole tank in 3D (mm, Z up, tank base at z = 0, plan coordinates as in `plan_view.dxf`).
+It opens as a south-east isometric of the whole tank.
+
+* Half cubes (two per full layer, the upper one upside down) and side plates are the simplified GLB meshes in
+  `components/glb` (not in git: see `.gitignore`); a half layer is one half cube under a flat top plate.
+* **Pipes and manholes are drawn at the size in the payload**: a pipe at its `diameter` (open tube, 450 mm beyond the side
+  plate, centre at its invert level), a manhole at its `manhole_type` footprint (square 600x600, circular 600, circular 300 ...)
+  rising from the tank top to FSL with a lid. They are generated, not taken from the fixed-size manhole / pit GLBs.
+* Every part is one block of 3DFACEs repeated as INSERTs, so the sample payloads come out at 1 - 3 MB. Layers: `TANK_MODULE`,
+  `TANK_SIDE_PLATE`, `TANK_TOP_PLATE`, `PIPES_INLET`, `PIPES_OUTLET`, `MANHOLES`.
+* Not modelled: connector clips (no model for them), geofab / liner / excavation, pits.
 
 ## How it stays in step with the PDF
 
@@ -58,5 +103,5 @@ output/<payload>/
 ## Requirements and limits
 
 * `ezdxf`, `reportlab` (the drawing code in `generator/`).
-* DXF R2010; every file is audited before saving and again after reopening. Opening in AutoCAD itself is
+* DXF R2013 (AutoCAD 2013, AC1027); every file is audited before saving and again after reopening. Opening in AutoCAD itself is
   still to be checked by a person - nothing here runs AutoCAD.

@@ -510,7 +510,7 @@ def draw_plan_view(c, d, x0, y0, s, floor_y=None):
 
     # ---- centre information box --------------------------------------------
     cap = f"{d['tank_storage']:g}m3"
-    info = ["AtlanCUBE 1000L MODULE",
+    info = ["AtlanCube 1000L MODULE",
             f"({d['cubes_wide']}-CUBES ROW x {d['cubes_long']}-CUBES LONG)",
             d["stack_label"],
             f"FSL {fmt_rl(d['fsl'])}",
@@ -543,7 +543,7 @@ def draw_plan_view(c, d, x0, y0, s, floor_y=None):
     dim_h(c, red[0], mod[0], y_mod, "", narrow=("MIN.", "500"), ext_to=red[3])
     dim_h(c, mod[2], red[2], y_mod, "", narrow=("MIN.", "500"), ext_to=red[3], text_right=True)
     dim_h(c, mod[0], mod[2], y_mod, f"{d['length']:.0f}",
-          f"({d['cubes_long']}x) AtlanCUBE @1150mm 1000L MODULE", ext_to=mod[3] + 7.5, fit_label=True,
+          f"({d['cubes_long']}x) AtlanCube @1150mm 1000L MODULE", ext_to=mod[3] + 7.5, fit_label=True,
           value_above=True)
 
     # ---- dimensions: module width / excavation width (right columns) ------------
@@ -553,7 +553,7 @@ def draw_plan_view(c, d, x0, y0, s, floor_y=None):
     dim_v(c, x_exc, red[1], red[3], f"{d['exc_width']:.0f}", "EXCAVATION WIDTH", ext_to=red[2],
           fit_label=True)
     dim_v(c, x_mod, mod[1], mod[3], f"{d['width']:.0f}",
-          f"({d['cubes_wide']}x) AtlanCUBE @1150mm 1000L MODULE", ext_to=mod[2] + 7.5, fit_label=True)
+          f"({d['cubes_wide']}x) AtlanCube @1150mm 1000L MODULE", ext_to=mod[2] + 7.5, fit_label=True)
     dim_v(c, x_mod, red[1], mod[1], "", narrow="MIN. 500", ext_to=red[2], narrow_below=True)
     dim_v(c, x_mod, mod[3], red[3], "", narrow="MIN. 500", ext_to=red[2])
 

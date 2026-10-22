@@ -17,7 +17,7 @@ HERE = Path(__file__).resolve().parent
 PAYLOAD_DIR = HERE / "payload"
 SOURCES = sorted(PAYLOAD_DIR.glob("source_data*.json"))
 VIEW_FILES = {"plan_view.dxf", "front_elevation.dxf", "back_elevation.dxf", "left_elevation.dxf",
-              "right_elevation.dxf"}
+              "right_elevation.dxf", "general_arrangement.dxf"}
 
 
 def load(name="source_data.json"):
@@ -151,7 +151,7 @@ class ViewTests(unittest.TestCase):
             paths = generator.convert(data, folder)
             plan = ezdxf.readfile(Path(folder) / "plan_view.dxf")
             self.assertFalse(plan.modelspace().query("CIRCLE"))
-            self.assertEqual(len(paths), 5)
+            self.assertEqual(len(paths), 6)
 
 
 if __name__ == "__main__":

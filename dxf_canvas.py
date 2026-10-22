@@ -100,6 +100,25 @@ class _Path:
         self.subs.append([[(x, y), (x + w, y), (x + w, y + h), (x, y + h)], True])
 
 
+class _TextObject:
+    """reportlab PDFTextObject look-alike: just what the PDF sheet code uses (font, render mode, origin, textOut)."""
+
+    def __init__(self):
+        self.font, self.mode, self.origin, self.runs = ("Helvetica", 10.0), 0, (0.0, 0.0), []
+
+    def setFont(self, name, size, leading=None):
+        self.font = (name, size)
+
+    def setTextRenderMode(self, mode):
+        self.mode = mode
+
+    def setTextOrigin(self, x, y):
+        self.origin = (x, y)
+
+    def textOut(self, text):
+        self.runs.append(text)
+
+
 class Form:
     def __init__(self, name, bbox):
         self.name, self.bbox, self.prims, self.lw = name, bbox, [], None
@@ -281,6 +300,23 @@ class Recorder:
     def drawRightString(self, x, y, text, **kw):
         self._text(x, y, text, "r")
 
+    def drawImage(self, path, x, y, width, height, mask=None, preserveAspectRatio=False, **kw):
+        """A single-colour image (the logo) becomes vector shapes when emitted - see ``trace_image``."""
+        self._add(Prim("image", self._layer("image"), [self._xy(x, y), self._xy(x + width, y + height)],
+                       path=str(path), fit=preserveAspectRatio))
+
+    def beginText(self):
+        return _TextObject()
+
+    def drawText(self, obj):
+        """One text run; the PDF's "outline" render mode (the stamp) becomes plain text in the stroke colour."""
+        self.saveState()
+        self.setFont(*obj.font)
+        if obj.mode == 1:
+            self._st.fill = self._st.stroke
+        self._text(*obj.origin, "".join(obj.runs), "l")
+        self.restoreState()
+
     # --- forms (reusable artwork -> DXF blocks) --------------------------------------
     def hasForm(self, name):
         return name in self.forms
@@ -352,15 +388,86 @@ def bounds(rec, string_width=None):
     return (min(xs), min(ys), max(xs), max(ys))
 
 
+# ---------------------------------------------------------------------------- image -> vector
+def _simplify(pts, tol):
+    """Ramer-Douglas-Peucker on an open polyline (list of (x, y)); keeps both ends."""
+    keep, todo = {0, len(pts) - 1}, [(0, len(pts) - 1)]
+    while todo:
+        a, b = todo.pop()
+        if b - a < 2:
+            continue
+        (ax, ay), (bx, by) = pts[a], pts[b]
+        dx, dy = bx - ax, by - ay
+        norm = math.hypot(dx, dy) or 1.0
+        far, dist = max(((i, abs((pts[i][0] - ax) * dy - (pts[i][1] - ay) * dx) / norm) for i in range(a + 1, b)),
+                        key=lambda t: t[1])
+        if dist > tol:
+            keep.add(far)
+            todo += [(a, far), (far, b)]
+    return [pts[i] for i in sorted(keep)]
+
+
+_TRACED = {}
+
+
+def trace_image(path, tol=0.35):
+    """Outline a single-colour image with a transparent background as closed polygons.
+
+    Returns (loops, (width, height), (r, g, b)): loops in pixel coordinates (y down), outer outlines and holes alike
+    (fill them with the even-odd rule).  Marching squares on the alpha channel at 50 % - the antialiased edge pixels
+    give sub-pixel accurate outlines - thinned by Douglas-Peucker (tol in pixels; 0.35 px of a 3500 px logo is far
+    below what a plot shows).  ponytail: polygons, not a curve fit; a finer tol if one ever zooms in further."""
+    if path in _TRACED:
+        return _TRACED[path]
+    import numpy as np
+    from PIL import Image
+    rgba = np.asarray(Image.open(path).convert("RGBA"))
+    a = np.pad(rgba[..., 3] / 255.0, 1)                          # 1 px margin: every outline closes
+    inside = a >= 0.5
+    cross = {}                      # grid edge -> (x, y) where alpha crosses 50 %; (0, r, c): pixel (r, c) | (r, c + 1), (1, r, c): (r, c) / (r + 1, c)
+    for axis, (v0, v1) in enumerate(((a[:, :-1], a[:, 1:]), (a[:-1, :], a[1:, :]))):
+        for r, c in zip(*np.nonzero((v0 >= 0.5) != (v1 >= 0.5))):
+            t = (0.5 - v0[r, c]) / (v1[r, c] - v0[r, c])
+            cross[(axis, r, c)] = (c + t, r) if axis == 0 else (c, r + t)
+    cells = {(r, c) for axis, r, c in cross for r, c in (((r, c), (r - 1, c)) if axis == 0 else ((r, c), (r, c - 1)))}
+    link = {}                       # crossing -> the two crossings it is joined to by the outline
+    for r, c in cells:
+        top, right, bottom, left = (0, r, c), (1, r, c + 1), (0, r + 1, c), (1, r, c)
+        hit = [e for e in (top, right, bottom, left) if e in cross]
+        if len(hit) == 4:           # saddle: the centre value decides which corners are joined
+            same = inside[r, c] == (a[r:r + 2, c:c + 2].mean() >= 0.5)
+            hit = [top, right, bottom, left] if same else [top, left, right, bottom]
+        for e0, e1 in zip(hit[::2], hit[1::2]):
+            link.setdefault(e0, []).append(e1)
+            link.setdefault(e1, []).append(e0)
+    loops, seen = [], set()
+    for start in link:
+        if start in seen:
+            continue
+        loop, prev, cur = [], None, start
+        while cur not in seen:
+            seen.add(cur)
+            loop.append((cross[cur][0] - 0.5, cross[cur][1] - 0.5))
+            nxt = link[cur][0] if link[cur][0] != prev else link[cur][1]
+            prev, cur = cur, nxt
+        far = max(range(len(loop)), key=lambda i: (loop[i][0] - loop[0][0]) ** 2 + (loop[i][1] - loop[0][1]) ** 2)
+        loop = _simplify(loop[:far + 1], tol)[:-1] + _simplify(loop[far:] + loop[:1], tol)[:-1]
+        if len(loop) > 2:
+            loops.append(loop)
+    colour = tuple(rgba[..., :3][rgba[..., 3] > 127].mean(0).round().astype(int))
+    _TRACED[path] = (loops, (rgba.shape[1], rgba.shape[0]), colour)
+    return _TRACED[path]
+
+
 # ---------------------------------------------------------------------------- DXF output
 STYLES = (("ARIAL", "arial.ttf"), ("ARIAL_BOLD", "arialbd.ttf"),
           ("ARIAL_ITALIC", "ariali.ttf"), ("ARIAL_BOLDITALIC", "arialbi.ttf"))
 
 
 def new_document(layers=()):
-    """R2010 DXF in millimetres with the project's text styles and the given (name, aci colour) layers."""
+    """R2013 (AutoCAD 2013, AC1027) DXF in millimetres with the project's text styles and the given (name, aci colour) layers."""
     import ezdxf
-    doc = ezdxf.new("R2010", units=ezdxf.units.MM)
+    doc = ezdxf.new("R2013", units=ezdxf.units.MM)
     doc.header["$MEASUREMENT"] = 1
     doc.header["$LWDISPLAY"] = 1
     for style, font in STYLES:
@@ -446,6 +553,8 @@ class Emitter:
                 self._insert(pr, lay)
             elif pr.kind == "dim":
                 self._dim(pr, lay)
+            elif pr.kind == "image":
+                self._image(pr, lay)
             elif pr.kind == "text":
                 self._text(pr, lay)
             else:
@@ -554,6 +663,18 @@ class Emitter:
         if lw_form:                       # the artwork's own pen scales with the form when it is drawn
             attr["lineweight"] = _lineweight(lw_form * math.sqrt(sx_pt * sy_pt))
         lay.add_blockref(name, (x, y), dxfattribs=attr)
+
+    def _image(self, pr, lay):
+        loops, (iw, ih), rgb = trace_image(pr.extra["path"])
+        (x0, y0), (x1, y1) = (self._pt(p) for p in pr.pts)
+        sx, sy = (x1 - x0) / iw, (y1 - y0) / ih
+        if pr.extra["fit"]:                                         # as ReportLab: fit the box, centred
+            sx = sy = min(sx, sy)
+            x0, y0 = x0 + ((x1 - x0) - iw * sx) / 2, y0 + ((y1 - y0) - ih * sy) / 2
+        hatch = lay.add_hatch(dxfattribs={"layer": pr.layer})
+        hatch.set_solid_fill(rgb=tuple(int(v) for v in rgb))
+        for loop in loops:
+            hatch.paths.add_polyline_path([(x0 + px * sx, y0 + (ih - py) * sy) for px, py in loop], is_closed=True)
 
     def _dim(self, pr, lay):
         p1, p2, base = (self._pt(p) for p in pr.pts)

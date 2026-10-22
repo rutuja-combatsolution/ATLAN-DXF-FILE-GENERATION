@@ -2,4 +2,12 @@
 Everything in generator/ is a byte-for-byte copy of the PDF project at that commit, except:
   Internal/elevation_view.py  liner callout search `for _ in range(30)` -> `range(400)` (the PDF's 30 steps run out on a
                               tall cover at the larger plot scales the DXF uses and the callout lands on the FSL label).
-Re-apply that one line after copying a newer elevation_view.py over it.
+                              draw_elevation_page(..., max_s=0.10) - the 0.10 scale cap is now a parameter, and the
+                              function returns the scale it used (sheet_export.py picks a standard plot scale from it).
+Atlan-Stormwater-LogoR.png is the PDF project's title block logo (main.py's draw_signatures reads it from here).
+Re-apply those edits after copying a newer elevation_view.py over it.
+main.py, page1.py, page3.py are the PDF's sheet code (frame, title block, GA sheet with parts list / site
+level box / notes); sheet_export.py drives them to write the combined sheet DXF. page3.py (section sheet) is only here
+because main.py imports it - the DXF does not draw that sheet.
+main.py differs from the PDF's: page4.py (BOM sheet) is dropped - its import, the "bom" entry in SHEETS and the
+`kind == "bom"` branch in draw_full_page are removed. Re-apply that after copying a newer main.py over it.

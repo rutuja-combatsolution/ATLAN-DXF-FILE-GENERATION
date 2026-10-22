@@ -1,4 +1,5 @@
-"""Payload JSON -> five separate CAD files: plan view and front / back / left / right elevation DXFs.
+"""Payload JSON -> five separate CAD files (plan view and front / back / left / right elevation DXFs) plus one
+combined general_arrangement.dxf with the PDF's sheets 1-4 (see sheet_export.py).
 
     python json_to_dxf.py payload/source_data.json [output_dir] [--exploded-dims]
 
@@ -40,12 +41,15 @@ def drawing_from_json(payload):
 
 
 def convert(data, out_dir, native_dims=True):
-    """Write the five view DXFs and manifest.json into out_dir. Returns the DXF paths written."""
+    """Write the five view DXFs, the combined general_arrangement.dxf and manifest.json into out_dir. Returns the DXF paths written."""
+    import sheet_export
     import view_export
 
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     views = view_export.export_views(data, out_dir, native_dims)
+    sheet = sheet_export.export_sheets(data, out_dir / "general_arrangement.dxf")
+    print(f"Saved: {out_dir / sheet['file']}  ({len(sheet['sheets'])} sheets)")
 
     manifest = {
         "generated": datetime.datetime.now().isoformat(timespec="seconds"),
@@ -56,9 +60,10 @@ def convert(data, out_dir, native_dims=True):
                      "rows_mm": data["rows_mm"]},
         "levels": {"fsl": data["fsl"], "top_of_storage": data["top_rl"], "base": data["base_rl"]},
         "views": views,
+        "general_arrangement": sheet,
     }
     (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8")
-    return [out_dir / v["file"] for v in views]
+    return [out_dir / v["file"] for v in views] + [out_dir / sheet["file"]]
 
 
 def load_payload(path):

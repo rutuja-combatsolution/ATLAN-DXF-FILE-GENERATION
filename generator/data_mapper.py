@@ -207,8 +207,8 @@ def build(payload: dict) -> dict:
         "rev_history":   proj.get("rev_history") or [["1", drawn_date, "R.R.", "INITIAL RELEASE"]],
         "project_lines": project_lines,
         "title_lines": [
-            "ATLAN CUBE",
-            f"ATLAN CUBE 1000L MODULE ({stack_label})",
+            "AtlanCube",
+            f"AtlanCube 1000L MODULE ({stack_label})",
             f"{cubes_wide}-CUBES WIDE x {cubes_long}-CUBES LONG - {fmt_num(storage)}m3",
             "GENERAL ARRANGEMENT",
         ],
@@ -225,6 +225,7 @@ def build(payload: dict) -> dict:
         # ---- levels -----------------------------------------------------------
         "fsl": fsl, "base_rl": base_rl, "top_rl": top_rl,
         "cover": cover, "exc_depth": cover + stack_h,
+        "access_cover": g.get("access_cover_thickness"),     # mm; None = not known yet, the box stays blank
 
         # ---- pipework ---------------------------------------------------------
         "pipes": pipes, "manholes": manholes,

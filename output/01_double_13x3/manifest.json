@@ -1,9 +1,9 @@
 {
-  "generated": "2026-10-20T22:26:12",
+  "generated": "2026-10-22T14:46:37",
   "project": [],
   "title": [
-    "ATLAN CUBE",
-    "ATLAN CUBE 1000L MODULE (DOUBLE STACK)",
+    "AtlanCube",
+    "AtlanCube 1000L MODULE (DOUBLE STACK)",
     "3-CUBES WIDE x 13-CUBES LONG - 78m3",
     "GENERAL ARRANGEMENT"
   ],
@@ -79,5 +79,66 @@
       ],
       "mm_per_pt": 7.056
     }
-  ]
+  ],
+  "general_arrangement": {
+    "file": "general_arrangement.dxf",
+    "sheets": [
+      {
+        "sheet": "1 OF 4",
+        "content": "GENERAL ARRANGEMENT",
+        "plot_scale": "1:100",
+        "size": "A3",
+        "frame_mm": [
+          42000,
+          29700
+        ],
+        "origin_mm": [
+          0,
+          101700
+        ]
+      },
+      {
+        "sheet": "2 OF 4",
+        "content": "BACK ELEVATION",
+        "plot_scale": "1:100",
+        "size": "A3",
+        "frame_mm": [
+          42000,
+          29700
+        ],
+        "origin_mm": [
+          0,
+          67800
+        ]
+      },
+      {
+        "sheet": "3 OF 4",
+        "content": "LEFT ELEVATION",
+        "plot_scale": "1:100",
+        "size": "A3",
+        "frame_mm": [
+          42000,
+          29700
+        ],
+        "origin_mm": [
+          0,
+          33900
+        ]
+      },
+      {
+        "sheet": "4 OF 4",
+        "content": "RIGHT ELEVATION",
+        "plot_scale": "1:100",
+        "size": "A3",
+        "frame_mm": [
+          42000,
+          29700
+        ],
+        "origin_mm": [
+          0,
+          0
+        ]
+      }
+    ]
+  }
 }

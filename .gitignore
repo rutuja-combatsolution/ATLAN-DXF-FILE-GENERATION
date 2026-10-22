@@ -12,8 +12,13 @@ site-packages/
 build/
 dist/
 
+# Large CAD / mesh source components (copied from Downloads)
+components/
+
 # Editor / OS
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
+
+components/
